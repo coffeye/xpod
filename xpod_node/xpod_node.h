@@ -11,8 +11,9 @@
 #ifndef _XPOD_NODE_H
 #define _XPOD_NODE_H
 
-#define ENABLE_SDCARD_LOG 0
-#define ENABLE_SERIAL_LOG 1
+#define SDCARD_LOG_ENABLEB  0
+#define SERIAL_LOG_ENABLED  1
+#define DEBUG_LOG_ENABLED   0
 
 enum sensor_data_e
 {
@@ -56,5 +57,13 @@ typedef struct
     int8_t channel;
     char *name;
 } sensor_info_t;
+
+typedef struct
+{
+    const uint8_t cs_pin;
+    const uint8_t miso_pin;
+    const uint8_t mosi_pin;
+    const uint8_t sck_pin;
+} soft_spi_sd_t;
 
 #endif // _XPOD_NODE_H

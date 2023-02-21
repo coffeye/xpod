@@ -26,11 +26,6 @@ void GPS_Module::getGpsDate(char *date_str)
   }
   else {
     if (gps_date.year() == CURRENT_YEAR)
-      gps_locked = true;
-    else
-      gps_locked = false;
-
-    if (gps_locked)
       sprintf(date_str, "%02d/%02d/%02d ", gps_date.month(), gps_date.day(), gps_date.year());
     else
       *date_str = '\0';
@@ -47,7 +42,7 @@ void GPS_Module::getGpsTime(char* time_str)
     *time_str = '\0';
   }
   else {
-    if (gps_locked)
+    if (gps.date.year() == CURRENT_YEAR)
       sprintf(time_str, "%02d:%02d:%02d ", gps_time.hour(), gps_time.minute(), gps_time.second());
     else
       *time_str = '\0';
@@ -64,14 +59,16 @@ void GPS_Module::getGpsDateTime(char* str)
   this->getGpsDate(gps_date);
   this->getGpsTime(gps_time);
 
-  if (gps_locked) {
-    *str = '\0';
-  }
-  else {
+  if (strlen(gps_date) != 0 && strlen(gps_time) != 0)
+  {
     strcpy(str, gps_date);
     strcat(str, ",");
     strcat(str, gps_time);
-  }  
+  }
+  else
+  {
+    *str = '\0';
+  }
 }
 
 void GPS_Module::smartDelay(unsigned long ms)

@@ -14,6 +14,7 @@
 #define SDCARD_LOG_ENABLEB  0
 #define SERIAL_LOG_ENABLED  1
 #define DEBUG_LOG_ENABLED   0
+#define FIGARO_RAW_ENABLED  1
 
 enum sensor_data_e
 {

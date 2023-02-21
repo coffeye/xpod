@@ -75,6 +75,11 @@ SdFat sd;
 File file;
 GPS_Module gps_module;
 
+#if FIGARO_RAW_ENABLED
+uint16_t fig00_raw16;
+uint16_t fig02_raw16;
+#endif
+
 void setup()
 {
 #if SERIAL_LOG_ENABLED
@@ -141,33 +146,94 @@ void loop()
 
 #if SERIAL_LOG_ENABLED
     // Time-stamping using GPS Module
-    Serial.print("[");
     gps_module.getGpsDateTime(gps_data);
-    if (strlen(gps_data) != 0) {
+
+    Serial.print("[");
+    if (strlen(gps_data) != 0)
+    {
       Serial.print(gps_data);
     }
-    else {
+    else
+    {
       Serial.print(itr_counter);
     }
     Serial.print("]");
 
-    for (int i = 0; i < DATA_COUNT; i++)
-    {
-        Serial.print(sensor_data_arr[i].name);
-        Serial.print(": ");
-        Serial.print(sensor_data_arr[i].value);
+    Serial.print(sensor_data_arr[DATA_INVOLT].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_INVOLT].value);
+    Serial.print(" , ");
 
-        if (sensor_data_arr[i].unit != "")
-        {
-            Serial.print(" ");
-            Serial.print(sensor_data_arr[i].unit);
-        }
+    Serial.print(sensor_data_arr[DATA_FIG2600].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_FIG2600].value);
+#if FIGARO_RAW_ENABLED
+    Serial.print("(");
+    Serial.print(fig00_raw16);
+    Serial.print(")");
+#endif
+    Serial.print(" , ");
+    
+    Serial.print(sensor_data_arr[DATA_FIG2602].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_FIG2602].value);
+#if FIGARO_RAW_ENABLED
+    Serial.print("(");
+    Serial.print(fig02_raw16);
+    Serial.print(")");
+#endif
+    Serial.print(" , ");
 
-        if (i != (DATA_COUNT - 1))
-            Serial.print(" , ");
-        else
-            Serial.println();
-    }
+    Serial.print(sensor_data_arr[DATA_PID].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_PID].value);
+    Serial.print(" , ");
+
+    Serial.print(sensor_data_arr[DATA_E2V].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_E2V].value);
+    Serial.print(" , ");
+
+    Serial.print(sensor_data_arr[DATA_CO2].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_CO2].value);
+    Serial.print(" , ");
+
+    Serial.print(sensor_data_arr[DATA_CO].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_CO].value);
+    Serial.print(" , ");
+
+    Serial.print(sensor_data_arr[DATA_TEMPERATURE].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_TEMPERATURE].value);
+    Serial.print(" C");
+    Serial.print(" , ");
+
+    Serial.print(sensor_data_arr[DATA_PRESSURE].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_PRESSURE].value);
+    Serial.print(" hpa");
+    Serial.print(" , ");
+
+    Serial.print(sensor_data_arr[DATA_HUMIDITY].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_HUMIDITY].value);
+    Serial.print(" %");
+    Serial.print(" , ");
+
+    Serial.print(sensor_data_arr[DATA_GAS].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_GAS].value);
+    Serial.print(" KOhms");
+    Serial.print(" , ");
+
+    Serial.print(sensor_data_arr[DATA_ALTITUDE].name);
+    Serial.print(": ");
+    Serial.print(sensor_data_arr[DATA_ALTITUDE].value);
+    Serial.print(" m");
+
+    Serial.println();
 #endif
 
 #if SDCARD_LOG_ENABLED
@@ -185,7 +251,6 @@ void loop()
     file.close();
 #endif
 
-    // delay(500);
     itr_counter++;
 }
 
@@ -231,11 +296,14 @@ float read_figaro(const sensor_info_t *sensor_info)
 {
     float figaro_volts = 0.0;
     float contaminants = 0.0;
-    float sum = 0.0;
-    float Vsum = 0.0;
-    int n = 0;
-    int avg = 20;
+    float c_sum = 0.0;
+    float v_sum = 0.0;
+    int samples = 20;
     int16_t adc = 0;
+
+#if FIGARO_RAW_ENABLED
+    uint32_t raw_sum = 0.0;
+#endif
 
     if (!ads_module.begin(sensor_info->addr))
     {
@@ -246,24 +314,31 @@ float read_figaro(const sensor_info_t *sensor_info)
         return -999;
     }
 
-    while (n != avg)
+    for (int i = 0; i < samples; i++)
     {
         adc = ads_module.readADC_SingleEnded(sensor_info->channel);
         figaro_volts = ads_module.computeVolts(adc);
         contaminants = ((5.000 / figaro_volts) - 1) / ((5.000 / 0.1) - 1); // rs/ro, change 0.1 to voltage in clean air, (5/voltage_dirty) / (5/Voltage_clean)
-        sum = sum + contaminants;
-        Vsum = Vsum + figaro_volts;
-        n++;
+        c_sum = c_sum + contaminants;
+        v_sum = v_sum + figaro_volts;
+#if FIGARO_RAW_ENABLED
+        raw_sum = raw_sum + adc;
+#endif
     }
-    contaminants = sum / avg;
-    figaro_volts = Vsum / avg;
+
+    contaminants = c_sum / samples;
+    figaro_volts = v_sum / samples;
+
+#if FIGARO_RAW_ENABLED
+    if (sensor_info->addr == 0x48)
+        fig00_raw16 = raw_sum / samples;
+    else
+        fig02_raw16 = raw_sum / samples;
+#endif
+
     if (contaminants > 1.000)
-    {
         contaminants = 1.000;
-    }
-    n = 0;
-    sum = 0.0;
-    Vsum = 0.0;
+
     // return contaminants;
     return figaro_volts; // return adc value, rs/ro, heater resistance. use other code to calc rs/ro, calc heater resistance,
 }

@@ -20,7 +20,9 @@
 #include <SdFat.h>
 #include <Adafruit_ADS1X15.h>
 #include <Adafruit_BME680.h>
+#include <EEPROM.h>
 #include <s300i2c.h>
+#include <avr/wdt.h>
 #include "xpod_node.h"
 #include "gps_module.h"
 
@@ -29,6 +31,7 @@
 #define IN_VOLT_PIN           (A0)
 #define SEALEVELPRESSURE_HPA  (1013.25)
 
+void (*resetFunc) (void) = 0;
 
 const sensor_info_t sensor_info_arr[SENSORS_COUNT] = {
     {.addr = 0x48, .channel = 3, .name = "FIGARO_2600"},
@@ -53,18 +56,12 @@ sensor_data_t sensor_data_arr[DATA_COUNT] = {
     {.name = "Gas", .unit = "KOhms"},
     {.name = "Alt", .unit = "m"}};
 
-soft_spi_sd_t soft_spi_sd = {
-    .cs_pin = 43, 
-    .miso_pin = 49, 
-    .mosi_pin = 45, 
-    .sck_pin = 47
-};
+// SdFat software SPI
+SoftSpiDriver<SOFT_MISO_PIN, SOFT_MOSI_PIN, SOFT_SCK_PIN> softSpi;
 
-
-#if ENABLE_DEDICATED_SPI && SDCARD_LOG_ENABLED
-SoftSpiDriver<soft_spi_sd.miso_pin, soft_spi_sd.miso_pin, soft_spi_sd.cs_pin> softSpi;
+#if ENABLE_DEDICATED_SPI
 #define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(0), &softSpi)
-#else
+#else  // ENABLE_DEDICATED_SPI
 #define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SD_SCK_MHZ(0), &softSpi)
 #endif  // ENABLE_DEDICATED_SPI
 
@@ -75,10 +72,10 @@ SdFat sd;
 File file;
 GPS_Module gps_module;
 
-#if FIGARO_RAW_ENABLED
+int itr_counter = 0;
 uint16_t fig00_raw16;
 uint16_t fig02_raw16;
-#endif
+char gps_data[32];
 
 void setup()
 {
@@ -92,9 +89,16 @@ void setup()
         sd.initErrorHalt();
     }
 
-    if (!file.open("xpod.txt", O_RDWR | O_CREAT))
+    // check if file is present
+    if (file.open("xpod.txt", O_RDWR | O_AT_END))
     {
-        sd.errorHalt("open failed");
+        itr_counter = EEPROM.read(0);
+        itr_counter = itr_counter * 100;
+    }
+    else
+    {
+        file.open("xpod.txt", O_RDWR | O_CREAT);
+        EEPROM.write(0, 0);
     }
 #endif // SDCARD_LOG_ENABLED
 
@@ -125,9 +129,6 @@ void setup()
 
     delay(1000);
 }
-
-int itr_counter = 0;
-char gps_data[32];
 
 void loop()
 {
@@ -183,7 +184,6 @@ void loop()
     Serial.print(")");
 #endif
     Serial.print(" , ");
-
     Serial.print(sensor_data_arr[DATA_PID].name);
     Serial.print(": ");
     Serial.print(sensor_data_arr[DATA_PID].value);
@@ -237,21 +237,51 @@ void loop()
 #endif
 
 #if SDCARD_LOG_ENABLED
+    file.println();
     file.print(itr_counter);
     file.print(",");
-    for (int i = 0; i < DATA_COUNT; i++)
-    {
-        file.print(sensor_data_arr[i].value);
-
-        if (i != (DATA_COUNT - 1))
-            file.print(" , ");
-        else
-            file.println();
-    }
-    file.close();
+    file.print(sensor_data_arr[DATA_INVOLT].value);
+    file.print(",");
+    file.print(sensor_data_arr[DATA_FIG2600].value);
+    file.print(",");
+#if FIGARO_RAW_ENABLED
+    file.print(fig00_raw16);
+    file.print(",");
+#endif
+    file.print(sensor_data_arr[DATA_FIG2602].value);
+    file.print(",");
+#if FIGARO_RAW_ENABLED
+    file.print(fig02_raw16);
+    file.print(",");
+#endif
+    file.print(sensor_data_arr[DATA_PID].value);
+    file.print(",");
+    file.print(sensor_data_arr[DATA_E2V].value);
+    file.print(",");
+    file.print(sensor_data_arr[DATA_CO2].value);
+    file.print(",");
+    file.print(sensor_data_arr[DATA_CO].value);
+    file.print(",");
+    file.print(sensor_data_arr[DATA_TEMPERATURE].value);
+    file.print(",");
+    file.print(sensor_data_arr[DATA_PRESSURE].value);
+    file.print(",");
+    file.print(sensor_data_arr[DATA_HUMIDITY].value);
+    file.print(",");
+    file.print(sensor_data_arr[DATA_GAS].value);
+    file.print(",");
+    file.print(sensor_data_arr[DATA_ALTITUDE].value);
+    file.flush();
 #endif
 
     itr_counter++;
+    if ((itr_counter % 100) == 0)
+    {
+        EEPROM.write(0, itr_counter / 100);
+        file.close();
+        wdt_enable(WDTO_15MS);
+        while(1);
+    }
 }
 
 uint16_t read_ads1115(const sensor_info_t *sensor_info)
@@ -318,7 +348,8 @@ float read_figaro(const sensor_info_t *sensor_info)
     {
         adc = ads_module.readADC_SingleEnded(sensor_info->channel);
         figaro_volts = ads_module.computeVolts(adc);
-        contaminants = ((5.000 / figaro_volts) - 1) / ((5.000 / 0.1) - 1); // rs/ro, change 0.1 to voltage in clean air, (5/voltage_dirty) / (5/Voltage_clean)
+        // rs/ro, change 0.1 to voltage in clean air, (5/voltage_dirty) / (5/Voltage_clean)
+        contaminants = ((5.000 / figaro_volts) - 1) / ((5.000 / 0.1) - 1);
         c_sum = c_sum + contaminants;
         v_sum = v_sum + figaro_volts;
 #if FIGARO_RAW_ENABLED

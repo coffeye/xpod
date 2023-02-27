@@ -11,10 +11,15 @@
 #ifndef _XPOD_NODE_H
 #define _XPOD_NODE_H
 
-#define SDCARD_LOG_ENABLEB  0
+#define SDCARD_LOG_ENABLED  1
 #define SERIAL_LOG_ENABLED  1
 #define DEBUG_LOG_ENABLED   0
 #define FIGARO_RAW_ENABLED  1
+
+const uint8_t SD_CS_PIN = 43;
+const uint8_t SOFT_MISO_PIN = 49;
+const uint8_t SOFT_MOSI_PIN = 45;
+const uint8_t SOFT_SCK_PIN  = 47;
 
 enum sensor_data_e
 {
@@ -58,13 +63,5 @@ typedef struct
     int8_t channel;
     char *name;
 } sensor_info_t;
-
-typedef struct
-{
-    const uint8_t cs_pin;
-    const uint8_t miso_pin;
-    const uint8_t mosi_pin;
-    const uint8_t sck_pin;
-} soft_spi_sd_t;
 
 #endif // _XPOD_NODE_H

@@ -1,12 +1,24 @@
 /*******************************************************************************
- * @project Hannigan Lab's Next Gen. Air Quality Pods
- *
- * @file    xpod_node.ino
+ * @file    xpod_node.h
  * @brief   Collects data from sensors over ADC-16bit module and logs the data
  *          on both serial monitor and the SD card.
  *
- * @author 	Ajay Kandagal, ajka9053@colorado.edu
- * @date 	  Feb 09 2023
+ * @author 	Rylee Beach
+ * @date 	  ...
+ *
+ * @editor  Feb 06 2023, Ajay Kandagal, ajka9053@colorado.edu
+ * @change  Added macro flags to enable/disable logging on SD-card or Serial 
+ *          monitor logging.
+ *
+ * @editor  Feb 14 2023, Ajay Kandagal, ajka9053@colorado.edu
+ * @change  Added time-stamping using MKR GPS Module.
+ *
+ * @editor  Feb 25 2023, Ajay Kandagal, ajka9053@colorado.edu
+ * @change  Added SD card logging functionality. 
+ *
+ * @editor  Mar 02 2023, Ajay Kandagal, ajka9053@colorado.edu
+ * @change  Fixed memory leak issue caused by repeatedly calling 
+            Adafruit_ADS1X15::begin() in loop().
  ******************************************************************************/
 #ifndef _XPOD_NODE_H
 #define _XPOD_NODE_H
@@ -59,9 +71,10 @@ typedef struct
 
 typedef struct
 {
-    uint8_t addr;
-    int8_t channel;
-    char *name;
+    const uint8_t addr;
+    const int8_t channel;
+    const char *name;
+    Adafruit_ADS1115 *module;
 } sensor_info_t;
 
 #endif // _XPOD_NODE_H

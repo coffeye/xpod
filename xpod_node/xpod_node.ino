@@ -9,38 +9,40 @@
  * @date 	  ...
  *
  * @editor  Feb 06 2023, Ajay Kandagal, ajka9053@colorado.edu
- * @change  Added macro flags to enable/disable logging on SD-card or
- *          Serial Monitor logging.
+ * @change  Added macro flags to enable/disable logging on SD-card or Serial 
+ *          monitor logging.
  *
  * @editor  Feb 14 2023, Ajay Kandagal, ajka9053@colorado.edu
  * @change  Added time-stamping using MKR GPS Module.
+ *
+ * @editor  Feb 25 2023, Ajay Kandagal, ajka9053@colorado.edu
+ * @change  Added SD card logging functionality. 
+ *
+ * @editor  Mar 02 2023, Ajay Kandagal, ajka9053@colorado.edu
+ * @change  Fixed memeoty leak issue caused by repeatedly calling 
+            Adafruit_ADS1X15.begin()
  ******************************************************************************/
 #include <Wire.h>
 #include <SPI.h>
 #include <SdFat.h>
 #include <Adafruit_ADS1X15.h>
 #include <Adafruit_BME680.h>
-#include <EEPROM.h>
 #include <s300i2c.h>
-#include <avr/wdt.h>
 #include "xpod_node.h"
 #include "gps_module.h"
-
 
 #define CO_X4_ADDR            (0x4A)
 #define IN_VOLT_PIN           (A0)
 #define SEALEVELPRESSURE_HPA  (1013.25)
 
-void (*resetFunc) (void) = 0;
-
-const sensor_info_t sensor_info_arr[SENSORS_COUNT] = {
-    {.addr = 0x48, .channel = 3, .name = "FIGARO_2600"},
-    {.addr = 0x49, .channel = 2, .name = "FIGARO_2602"},
-    {.addr = 0x48, .channel = 2, .name = "PID"},
-    {.addr = 0x4B, .channel = 0, .name = "E2V"},
-    {.addr = 0x76, .channel = -1, .name = "BME"},
-    {.addr = 0x31, .channel = -1, .name = "CO2"},
-    {.addr = 0x4A, .channel = -1, .name = "CO"}};
+sensor_info_t sensor_info_arr[SENSORS_COUNT] = {
+    {.addr = 0x48, .channel = 3, .name = "FIGARO_2600", .module = new Adafruit_ADS1115},
+    {.addr = 0x49, .channel = 2, .name = "FIGARO_2602", .module = new Adafruit_ADS1115},
+    {.addr = 0x48, .channel = 2, .name = "PID", .module = new Adafruit_ADS1115},
+    {.addr = 0x4B, .channel = 0, .name = "E2V", .module = new Adafruit_ADS1115},
+    {.addr = 0x76, .channel = -1, .name = "BME", .module = NULL},
+    {.addr = 0x31, .channel = -1, .name = "CO2", .module = NULL},
+    {.addr = 0x4A, .channel = -1, .name = "CO", .module = new Adafruit_ADS1115}};
 
 sensor_data_t sensor_data_arr[DATA_COUNT] = {
     {.name = "IN_VOLT", .unit = "V"},
@@ -65,7 +67,6 @@ SoftSpiDriver<SOFT_MISO_PIN, SOFT_MOSI_PIN, SOFT_SCK_PIN> softSpi;
 #define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SD_SCK_MHZ(0), &softSpi)
 #endif  // ENABLE_DEDICATED_SPI
 
-Adafruit_ADS1115 ads_module;
 Adafruit_BME680 bme_sensor; // I2C
 S300I2C co2_sensor(Wire);
 SdFat sd;
@@ -90,15 +91,9 @@ void setup()
     }
 
     // check if file is present
-    if (file.open("xpod.txt", O_RDWR | O_AT_END))
-    {
-        itr_counter = EEPROM.read(0);
-        itr_counter = itr_counter * 100;
-    }
-    else
+    if (!file.open("xpod.txt", O_RDWR | O_AT_END))
     {
         file.open("xpod.txt", O_RDWR | O_CREAT);
-        EEPROM.write(0, 0);
     }
 #endif // SDCARD_LOG_ENABLED
 
@@ -127,17 +122,28 @@ void setup()
         bme_sensor.setGasHeater(320, 150); // 320*C for 150 ms
     }
 
+    for (int i = 0; i < SENSORS_COUNT; i++)
+    {
+        if (sensor_info_arr[i].module != NULL && !sensor_info_arr[i].module->begin(sensor_info_arr[i].addr))
+        {
+            Serial.print("Failed to initialize ");
+            Serial.println(sensor_info_arr[i].name);
+            //delete sensor_info_arr[i].module;
+            sensor_info_arr[i].module = NULL;
+        }    
+    }
+
     delay(1000);
 }
 
 void loop()
 {
     sensor_data_arr[DATA_INVOLT].value = (analogRead(IN_VOLT_PIN) * 5.02 * 5.0) / 1023.0;
+    sensor_data_arr[DATA_CO2].value = co2_sensor.getCO2ppm();
     sensor_data_arr[DATA_FIG2600].value = read_figaro(&sensor_info_arr[SENSOR_FIG2600]);
     sensor_data_arr[DATA_FIG2602].value = read_figaro(&sensor_info_arr[SENSOR_FIG2602]);
     sensor_data_arr[DATA_PID].value = read_ads1115(&sensor_info_arr[SENSOR_PID]);
     sensor_data_arr[DATA_E2V].value = read_ads1115(&sensor_info_arr[SENSOR_E2V]);
-    sensor_data_arr[DATA_CO2].value = co2_sensor.getCO2ppm();
     sensor_data_arr[DATA_CO].value = read_co(&sensor_info_arr[SENSOR_CO]); // addr SDA
     sensor_data_arr[DATA_TEMPERATURE].value = bme_sensor.temperature;
     sensor_data_arr[DATA_PRESSURE].value = bme_sensor.pressure / 100.0;
@@ -275,26 +281,14 @@ void loop()
 #endif
 
     itr_counter++;
-    if ((itr_counter % 100) == 0)
-    {
-        EEPROM.write(0, itr_counter / 100);
-        file.close();
-        wdt_enable(WDTO_15MS);
-        while(1);
-    }
 }
 
 uint16_t read_ads1115(const sensor_info_t *sensor_info)
 {
-    if (!ads_module.begin(sensor_info->addr))
-    {
-#if DEBUG_LOG_ENABLED
-        Serial.print("Failed to initialize ");
-        Serial.println(sensor_info->name);
-#endif
+    if (sensor_info->module == NULL)
         return -999;
-    }
-    return ads_module.readADC_SingleEnded(sensor_info->channel);
+
+    return sensor_info->module->readADC_SingleEnded(sensor_info->channel);
 }
 
 float read_co(const sensor_info_t *sensor_info)
@@ -302,17 +296,11 @@ float read_co(const sensor_info_t *sensor_info)
     int16_t worker, Aux;
     float multiplier = 0.1875F; // ADS1115  @ +/- 6.144V gain (16-bit results)
 
-    if (!ads_module.begin(sensor_info->addr))
-    {
-#if DEBUG_LOG_ENABLED
-        Serial.print("Failed to initialize ");
-        Serial.println(sensor_info->name);
-#endif
+    if (sensor_info->module == NULL)
         return -999;
-    }
 
-    worker = ads_module.readADC_Differential_0_1();
-    Aux = ads_module.readADC_Differential_2_3();
+    worker = sensor_info->module->readADC_Differential_0_1();
+    Aux = sensor_info->module->readADC_Differential_2_3();
     float result = worker - Aux;
     // Serial.print("Result: ");
     // Serial.print(result);
@@ -330,24 +318,17 @@ float read_figaro(const sensor_info_t *sensor_info)
     float v_sum = 0.0;
     int samples = 20;
     int16_t adc = 0;
-
 #if FIGARO_RAW_ENABLED
     uint32_t raw_sum = 0.0;
 #endif
 
-    if (!ads_module.begin(sensor_info->addr))
-    {
-#if DEBUG_LOG_ENABLED
-        Serial.print("Failed to initialize ");
-        Serial.println(sensor_info->name);
-#endif
+    if (sensor_info->module == NULL)
         return -999;
-    }
 
     for (int i = 0; i < samples; i++)
     {
-        adc = ads_module.readADC_SingleEnded(sensor_info->channel);
-        figaro_volts = ads_module.computeVolts(adc);
+        adc = sensor_info->module->readADC_SingleEnded(sensor_info->channel);
+        figaro_volts = sensor_info->module->computeVolts(adc);
         // rs/ro, change 0.1 to voltage in clean air, (5/voltage_dirty) / (5/Voltage_clean)
         contaminants = ((5.000 / figaro_volts) - 1) / ((5.000 / 0.1) - 1);
         c_sum = c_sum + contaminants;

@@ -16,8 +16,7 @@ The code is developed and compiled on Arduino IDE. Make sure you have the latest
 
 <!-- GETTING STARTED -->
 ## Getting Started
-To get a local copy of the code, run the below command or you can visit the [link](https://github.com/coffeye/xpod.git) and download the zip and extract. 
-* Git clone the this git repository
+* To get a local copy of the code, run the below command or use the [link](https://github.com/coffeye/xpod/archive/refs/heads/main.zip) to download the zip and extract.
    ```sh
    git clone https://github.com/coffeye/xpod.git
    ```
@@ -25,7 +24,7 @@ To get a local copy of the code, run the below command or you can visit the [lin
 
 ### Prerequisites
 
-The code uses various modules and to interface with them specific Arduino libraries are required. Install the following library packages within the Arduino IDE. If you donot know how to install a library in Arduino IDE, then follow this [link](https://docs.arduino.cc/software/ide-v2/tutorials/ide-v2-installing-a-library).
+The code uses various modules and to interface with them specific Arduino libraries are required. Install the following library packages within the Arduino IDE. If you do not know how to install a library in Arduino IDE, then follow this [link](https://docs.arduino.cc/software/ide-v2/tutorials/ide-v2-installing-a-library).
 
 * Adafruit ADS1X15
 * Adafruit BME680
@@ -35,7 +34,7 @@ The code uses various modules and to interface with them specific Arduino librar
 
 ### Modifications
 To enable SD card functionality, following modifications are required
-* Navigate to the folder where the Arduino libraries are installed. Usually this will be under Documents/Arduino/libraries
+* Navigate to the folder where the Arduino libraries are installed. Usually this will be under Documents/Arduino/libraries on Windows OS.
 * Inside this directory, open 'SdFat_-_Adafruit_Fork\src\SdFatConfig.h' file and change '#define SPI_DRIVER_SELECT 0' to '#define SPI_DRIVER_SELECT 2'
 * Save and close the file.
 

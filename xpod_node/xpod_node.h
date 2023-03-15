@@ -23,10 +23,13 @@
 #ifndef _XPOD_NODE_H
 #define _XPOD_NODE_H
 
+#include <Adafruit_ADS1X15.h>
+
 #define SDCARD_LOG_ENABLED  1
-#define SERIAL_LOG_ENABLED  1
 #define DEBUG_LOG_ENABLED   0
 #define FIGARO_RAW_ENABLED  1
+#define GPS_ON_UART0        1
+#define SERIAL_LOG_ENABLED  0
 
 const uint8_t SD_CS_PIN = 43;
 const uint8_t SOFT_MISO_PIN = 49;

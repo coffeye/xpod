@@ -25,7 +25,6 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <SdFat.h>
-#include <Adafruit_ADS1X15.h>
 #include <Adafruit_BME680.h>
 #include <s300i2c.h>
 #include "xpod_node.h"
@@ -33,6 +32,7 @@
 
 #define CO_X4_ADDR            (0x4A)
 #define IN_VOLT_PIN           (A0)
+#define GPS_INDICATOR_LED     (13)
 #define SEALEVELPRESSURE_HPA  (1013.25)
 
 sensor_info_t sensor_info_arr[SENSORS_COUNT] = {
@@ -67,6 +67,7 @@ SoftSpiDriver<SOFT_MISO_PIN, SOFT_MOSI_PIN, SOFT_SCK_PIN> softSpi;
 #define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SD_SCK_MHZ(0), &softSpi)
 #endif  // ENABLE_DEDICATED_SPI
 
+Adafruit_PM25AQI pm_sensor = Adafruit_PM25AQI();
 Adafruit_BME680 bme_sensor; // I2C
 S300I2C co2_sensor(Wire);
 SdFat sd;
@@ -84,6 +85,11 @@ void setup()
     Serial.begin(9600);
 #endif // SERIAL_LOG_ENABLED
 
+    if (!pm_sensor.begin_UART(&Serial1)) 
+    {
+      Serial.println("Could not find PM sensor!");
+    }
+
 #if SDCARD_LOG_ENABLED
     if (!sd.begin(SD_CONFIG))
     {
@@ -100,17 +106,24 @@ void setup()
     // For reading input voltage
     pinMode(IN_VOLT_PIN, INPUT);
 
+    pinMode(GPS_INDICATOR_LED, OUTPUT);
+    // digitalWrite(GPS_INDICATOR_LED, LOW);
+
     // For reading co2 sensor
     Wire.begin();
 
     if (!co2_sensor.begin(sensor_info_arr[SENSOR_CO2].addr))
     {
+#if SERIAL_LOG_ENABLED
         Serial.println("Error: CO2 sensor not working!");
+#endif
     }
 
     if (!bme_sensor.begin(sensor_info_arr[SENSOR_BME].addr))
     {
+#if SERIAL_LOG_ENABLED
         Serial.println("Error: BME680 sensor not working!");
+#endif
     }
     else
     {
@@ -126,8 +139,10 @@ void setup()
     {
         if (sensor_info_arr[i].module != NULL && !sensor_info_arr[i].module->begin(sensor_info_arr[i].addr))
         {
+#if SERIAL_LOG_ENABLED
             Serial.print("Failed to initialize ");
             Serial.println(sensor_info_arr[i].name);
+#endif
             //delete sensor_info_arr[i].module;
             sensor_info_arr[i].module = NULL;
         }    
@@ -138,6 +153,28 @@ void setup()
 
 void loop()
 {
+    if (aqi.read(&data))
+    {
+      Serial.println("Concentration Units (standard)"));
+      Serial.print("PM 1.0: "); Serial.print(data.pm10_standard);
+      Serial.print("\t\tPM 2.5: "); Serial.print(data.pm25_standard);
+      Serial.print("\t\tPM 10: "); Serial.println(data.pm100_standard);
+      Serial.println("Concentration Units (environmental)");
+      Serial.print("PM 1.0: "); Serial.print(data.pm10_env);
+      Serial.print("\t\tPM 2.5: "); Serial.print(data.pm25_env);
+      Serial.print("\t\tPM 10: "); Serial.println(data.pm100_env);
+      Serial.print("Particles > 0.3um / 0.1L air:"); Serial.println(data.particles_03um);
+      Serial.print("Particles > 0.5um / 0.1L air:"); Serial.println(data.particles_05um);
+      Serial.print("Particles > 1.0um / 0.1L air:"); Serial.println(data.particles_10um);
+      Serial.print("Particles > 2.5um / 0.1L air:"); Serial.println(data.particles_25um);
+      Serial.print("Particles > 5.0um / 0.1L air:"); Serial.println(data.particles_50um);
+      Serial.print("Particles > 10 um / 0.1L air:"); Serial.println(data.particles_100um);
+    }
+    else
+    {
+      Serial.println("Could not read from PM sensor");
+    }
+
     sensor_data_arr[DATA_INVOLT].value = (analogRead(IN_VOLT_PIN) * 5.02 * 5.0) / 1023.0;
     sensor_data_arr[DATA_CO2].value = co2_sensor.getCO2ppm();
     sensor_data_arr[DATA_FIG2600].value = read_figaro(&sensor_info_arr[SENSOR_FIG2600]);
@@ -158,10 +195,12 @@ void loop()
     Serial.print("[");
     if (strlen(gps_data) != 0)
     {
+      // digitalWrite(GPS_INDICATOR_LED, HIGH);
       Serial.print(gps_data);
     }
     else
     {
+      // digitalWrite(GPS_INDICATOR_LED, LOW);
       Serial.print(itr_counter);
     }
     Serial.print("]");
@@ -244,7 +283,17 @@ void loop()
 
 #if SDCARD_LOG_ENABLED
     file.println();
-    file.print(itr_counter);
+    gps_module.getGpsDateTime(gps_data);
+    if (strlen(gps_data) != 0)
+    {
+      // digitalWrite(GPS_INDICATOR_LED, HIGH);
+      file.print(gps_data);
+    }
+    else
+    {
+      // digitalWrite(GPS_INDICATOR_LED, LOW);
+      file.print(itr_counter);
+    }
     file.print(",");
     file.print(sensor_data_arr[DATA_INVOLT].value);
     file.print(",");
@@ -353,4 +402,55 @@ float read_figaro(const sensor_info_t *sensor_info)
 
     // return contaminants;
     return figaro_volts; // return adc value, rs/ro, heater resistance. use other code to calc rs/ro, calc heater resistance,
+}
+
+boolean read_pms()
+{
+  
+   if (! s->available()) 
+  {
+     return false;
+  }
+  
+  // Read a byte at a time until we get to the special '0x42' start-byte
+  if (s->peek() != 0x42) 
+  {
+    s->read();
+    return false;
+  }
+ 
+  // Now read all 32 bytes
+  if (s->available() < 32) 
+  {
+      return false;
+  }
+    
+  uint8_t buffer[32];    
+  uint16_t sum = 0;
+  s->readBytes(buffer, 32);
+ 
+  // get checksum ready
+  for (uint8_t i=0; i<30; i++) 
+  {
+    sum += buffer[i];
+  }
+  
+  // The data comes in endian'd, this solves it so it works on all platforms
+  uint16_t buffer_u16[15];
+  for (uint8_t i=0; i<15; i++) 
+  {
+    buffer_u16[i] = buffer[2 + i*2 + 1];
+    buffer_u16[i] += (buffer[2 + i*2] << 8);
+  }
+ 
+  // put it into a nice struct :)
+  memcpy((void *)&PMS_data, (void *)buffer_u16, 30);
+ 
+  if (sum != PMS_data.checksum) 
+  {
+    Serial.println("Checksum failure");
+    return false;
+  }
+  // success!
+  return true;
 }

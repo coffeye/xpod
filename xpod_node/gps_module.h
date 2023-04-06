@@ -14,11 +14,7 @@
 #include <TinyGPSPlus.h>
 #include "xpod_node.h"
 
-#if GPS_ON_UART0
-#define GPS_SERIAL    (Serial)
-#else
-#define GPS_SERIAL    (Serial2)
-#endif
+#define GPS_SERIAL    (Serial3)
 #define GPS_BAUDRATE  (9600)
 #define CURRENT_YEAR  (2023)
 

@@ -31,6 +31,7 @@ The code uses various modules and to interface with them specific Arduino librar
 * ELT S300
 * SdFat Adafruit Fork
 * TinyGPSPlus
+* RTClib
 
 ### Modifications
 To enable SD card functionality, following modifications are required
@@ -48,9 +49,12 @@ Features Implemented
 - Reading from FIGARO Sensor
 - Reading from CO2 and CO sensor
 - Serial Port logging
+- SD Card logging
+- Time Stamping with GPS
+- Time Stamping with RTC
 
 Features in Progress
-- [X] SD Card logging
-- [ ] Time stamping the logs
-- [ ] Time syncing when GPS signal is available
-- [ ] Time syncing when GPS signal not available (TBD)
+- [ ] Syncing RTC clock with GPS
+- [ ] PM Sensor
+- [ ] Quad Stat Sensor
+- [ ] MET station

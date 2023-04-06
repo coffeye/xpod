@@ -26,7 +26,7 @@ void GPS_Module::getGpsDate(char *date_str)
   }
   else {
     if (gps_date.year() == CURRENT_YEAR)
-      sprintf(date_str, "%02d/%02d/%02d ", gps_date.month(), gps_date.day(), gps_date.year());
+      sprintf(date_str, "%02d/%02d/%02d", gps_date.month(), gps_date.day(), gps_date.year());
     else
       *date_str = '\0';
   }
@@ -43,7 +43,7 @@ void GPS_Module::getGpsTime(char* time_str)
   }
   else {
     if (gps.date.year() == CURRENT_YEAR)
-      sprintf(time_str, "%02d:%02d:%02d ", gps_time.hour(), gps_time.minute(), gps_time.second());
+      sprintf(time_str, "%02d:%02d:%02d", gps_time.hour(), gps_time.minute(), gps_time.second());
     else
       *time_str = '\0';
   }
@@ -76,7 +76,7 @@ void GPS_Module::smartDelay(unsigned long ms)
   unsigned long start = millis();
   do 
   {
-    while (Serial2.available())
-      gps.encode(Serial2.read());
+    while (GPS_SERIAL.available())
+      gps.encode(GPS_SERIAL.read());
   } while (millis() - start < ms);
 }

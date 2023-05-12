@@ -16,12 +16,18 @@ The code is developed and compiled on Arduino IDE. Make sure you have the latest
 
 <!-- GETTING STARTED -->
 ## Getting Started
+
 * To get a local copy of the code, run the below command or use the [link](https://github.com/coffeye/xpod/archive/refs/heads/main.zip) to download the zip and extract.
    ```sh
    git clone https://github.com/coffeye/xpod.git
    ```
 * Navigate to the project directory. Double click on xpod_node.ino file to open the code in Arduino IDE.
 
+**NOTE :** For x-pod v3, run following git commands
+   ```sh
+   git clone https://github.com/coffeye/xpod.git
+   git checkout x-pod-v3
+   ```
 ### Prerequisites
 
 The code uses various modules and to interface with them specific Arduino libraries are required. Install the following library packages within the Arduino IDE. If you do not know how to install a library in Arduino IDE, then follow this [link](https://docs.arduino.cc/software/ide-v2/tutorials/ide-v2-installing-a-library).
@@ -32,6 +38,10 @@ The code uses various modules and to interface with them specific Arduino librar
 * SdFat Adafruit Fork
 * TinyGPSPlus
 * RTClib
+
+**NOTE :** For x-pod v3, add following libraries
+* PM25 AQI Sensor
+* MCP342x
 
 ### Modifications
 To enable SD card functionality, following modifications are required
@@ -52,9 +62,9 @@ Features Implemented
 - SD Card logging
 - Time Stamping with GPS
 - Time Stamping with RTC
+- PM Sensor
+- Quad Stat Sensor
 
 Features in Progress
 - [ ] Syncing RTC clock with GPS
-- [ ] PM Sensor
-- [ ] Quad Stat Sensor
 - [ ] MET station

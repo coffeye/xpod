@@ -23,7 +23,7 @@ The code is developed and compiled on Arduino IDE. Make sure you have the latest
    ```
 * Navigate to the project directory. Double click on xpod_node.ino file to open the code in Arduino IDE.
 
-**NOTE :** For x-pod v3, run following git commands
+**NOTE :** For x-pod v3, you can either use this [link](https://github.com/coffeye/xpod/archive/refs/heads/x-pod-v3.zip) to download or run the following git commands
    ```sh
    git clone https://github.com/coffeye/xpod.git
    git checkout x-pod-v3

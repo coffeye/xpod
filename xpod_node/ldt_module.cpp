@@ -18,40 +18,61 @@ LDT_Module::LDT_Module()
   rtc_status = false;
 }
 
-int LDT_Module::gpsBegin()
+int LDT_Module::begin()
 {
+
+#if GPS_ENABLED
   GPS_SERIAL.begin(GPS_BAUDRATE);
 
   if (gps.date.isValid())
-    gps_status = true;
-
-  return gps_status;
-}
-
-int LDT_Module::rtcBegin()
-{
-  if (rtc.begin())
   {
-    rtc_status = true;
+    gps_status = true;
   }
   else
   {
-    rtc_status = false;
-    return false;
+    Serial.println("Failed to initialize GPS");
   }
+#endif
 
-  if (rtc.lostPower())
+#if RTC_ENABLED
+  if (rtc.begin())
   {
-    Serial.println("RTC lost power, let's set the time!");
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  }
+    rtc_status = true;
 
-  return rtc_status;
+    if (rtc.lostPower())
+    {
+      Serial.println("RTC lost power, let's set the time!");
+      rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    }
+  }
+  else
+  {
+    Serial.println("Failed to initialize RTC");
+  }
+#endif
+
+  return gps_status || rtc_status;
 }
 
-String LDT_Module::getGpsDateTime()
+String LDT_Module::getDateTime()
 {
   String date_time_str;
+
+#if RTC_ENABLED
+  
+  if (!rtc_status)
+    return date_time_str;
+
+  DateTime rtc_date_time = rtc.now();
+
+  date_time_str += String(rtc_date_time.month()) + "/";
+  date_time_str += String(rtc_date_time.day()) + "/";
+  date_time_str += String(rtc_date_time.year()) + ",";
+  date_time_str += String(rtc_date_time.hour()) + ":";
+  date_time_str += String(rtc_date_time.minute()) + ":";
+  date_time_str += String(rtc_date_time.second());
+  
+#elif GPS_ENABLED
 
   if (!gps_status)
     return date_time_str;
@@ -66,25 +87,7 @@ String LDT_Module::getGpsDateTime()
   date_time_str += String(gps_time.minute()) + ":";
   date_time_str += String(gps_time.second());
   smartDelay(0);
-
-  return date_time_str;
-}
-
-String LDT_Module::getRtcDateTime()
-{
-  String date_time_str;
-
-  if (!rtc_status)
-    return date_time_str;
-
-  DateTime rtc_date_time = rtc.now();
-
-  date_time_str += String(rtc_date_time.month()) + "/";
-  date_time_str += String(rtc_date_time.day()) + "/";
-  date_time_str += String(rtc_date_time.year()) + ",";
-  date_time_str += String(rtc_date_time.hour()) + ":";
-  date_time_str += String(rtc_date_time.minute()) + ":";
-  date_time_str += String(rtc_date_time.second());
+#endif
 
   return date_time_str;
 }

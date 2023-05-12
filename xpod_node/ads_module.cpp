@@ -55,7 +55,6 @@ bool ADS_Module::begin()
   return true;
 }
 
-
 float ADS_Module::read_figaro(ads_sensor_id_e ads_sensor_id)
 {
   ads_module_t *sensor = &ads_module[ads_sensor_id];

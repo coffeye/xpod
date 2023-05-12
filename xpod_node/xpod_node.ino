@@ -1,67 +1,95 @@
 /*******************************************************************************
  * @project Hannigan Lab's Next Gen. Air Quality Pods
  *
- * @file    xpod_node.h
+ * @file    xpod_node.cpp
  * @brief   Collects data from sensors over ADC-16bit module and logs the data
  *          on both serial monitor and the SD card.
  *
- * @author 	Rylee Beach
- * @date 	  ...
- *
- * @editor  Ajay Kandagal, ajka9053@colorado.edu
- * @change  Feb 06 2023, Added macro flags to enable/disable logging on SD-card 
- *          or Serial monitor logging.
- * @change  Feb 14 2023, Added time-stamping using MKR GPS Module.
- * @change  Feb 25 2023, Added SD card logging functionality. 
- * @change  Mar 02 2023, Fixed memeory leak, caused by Adafruit_ADS1X15.begin().
- * @change  Mar 27 2023, Integrated GPS data logging into main code.
- * @change  Apr 03 2023, RTC timestamping integrated into main code.
- * @change  Apr 05 2023, Motor control through pot Added. Reading from 3rd and 
- *          4th Figaro sensors added.
+ * @author 	Ajay Kandagal
+ * @date 	  Following features are present:
+ *          - Sensors Figaro 2600, Fiagaro 2602, CO, PID, E2V, CO, CO2 and BME
+ *          - RTC time and GPS time stamping
+ *          - SD Card logging
+ *          - Motor control
  ******************************************************************************/
 #include "xpod_node.h"
 
-// SdFat software SPI
-SoftSpiDriver<SOFT_MISO_PIN, SOFT_MOSI_PIN, SOFT_SCK_PIN> softSpi;
+#include <Wire.h>
+#include <SPI.h>
+#include <SD.h>
+#include <s300i2c.h>
 
-#if ENABLE_DEDICATED_SPI
-#define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(0), &softSpi)
-#else  // ENABLE_DEDICATED_SPI
-#define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SD_SCK_MHZ(0), &softSpi)
-#endif  // ENABLE_DEDICATED_SPI
+#include "ads_module.h"
+#include "bme_module.h"
 
-SdFat sd;
-File file;
-S300I2C co2_sensor(Wire);
+#if RTC_ENABLED || GPS_ENABLED
+#include "ldt_module.h"
 LDT_Module ldt_module;
+#endif
+
+#if QUAD_ENABLED
+#include "quad_module.h"
+QUAD_Module quad_module;
+#endif
+
+#if MQ131_ENABLED
+#include "mq131_module.h"
+MQ131_Module mq131_module;
+#endif
+
+#if PMS_ENABLED
+#include "pms_module.h"
+PMS_Module pms_module;
+#endif
+
+
+/*************  Global Declarations  *************/
+// Modules
+S300I2C co2_sensor(Wire);
 ADS_Module ads_module;
 BME_Module bme_module;
 
+// Variables
+File file;
+
+/******************  Functions  ******************/
 void setup()
 {
   Serial.begin(9600);
+  Serial.println();
+
+  // In voltage
+  pinMode(IN_VOLT_PIN, INPUT);
+
+  // Motor control
+  pinMode(MOTOR_CTRL_IN_PIN, INPUT);
+  pinMode(MOTOR_CTRL_OUT_PIN, OUTPUT);
+
+  // Status LEDs
+  pinMode(STATUS_RUNNING, OUTPUT);
+  pinMode(STATUS_ERROR, OUTPUT);
+  pinMode(STATUS_HALTED, OUTPUT);
+
+  Wire.begin();
 
 #if SDCARD_LOG_ENABLED
-  if (!sd.begin(SD_CONFIG))
-  {
-    Serial.println("Failed to initialize SD card");
-    sd.initErrorHalt();
+  if (!SD.begin(SD_CARD_CS_PIN)) {
+    digitalWrite(STATUS_HALTED, HIGH);
+    Serial.println("Error: Card failed, or not present");
+    while(1);
   }
 
-  // check if file is present
-  if (!file.open("xpod.txt", O_RDWR | O_AT_END))
-  {
-    file.open("xpod.txt", O_RDWR | O_CREAT);
+  file = SD.open("xpod.txt", FILE_WRITE);
+
+  if (!file) {
+    Serial.println("Error: Failed to open file");
+    digitalWrite(STATUS_HALTED, HIGH);
+    while(1);
   }
 #endif
 
-  Wire.begin();
-  
-  if (!ldt_module.gpsBegin())
-    Serial.println("Error: Failed to initialize GPS module!");
-
-  if (!ldt_module.rtcBegin())
-    Serial.println("Error: Failed to initialize RTC module!");
+  if (!co2_sensor.begin(CO2_I2C_ADDR))
+    Serial.println("Error: Failed to initialize CO2 sensor!");
 
   if (!bme_module.begin())
     Serial.println("Error: Failed to initialize BME sensor!");
@@ -69,20 +97,24 @@ void setup()
   if (!ads_module.begin())
     Serial.println("Error: Failed to initialize one of the ADS1115 module!");
 
-  if (!co2_sensor.begin(CO2_I2C_ADDR))
-    Serial.println("Error: CO2 sensor not working!");
+#if GPS_ENABLED
+  if (!ldt_module.begin())
+    Serial.println("Error: Failed to initialize LDT module!");
+#endif
 
-  pinMode(IN_VOLT_PIN, INPUT);
+#if QUAD_ENABLED
+  if (!quad_module.begin())
+    Serial.println("Error: Failed to initialize Quad Stat!");
+#endif
 
-#if MOTOR_ENABLED
-  pinMode(MOTOR_CONTROL_POT_PIN, INPUT);
-  // Currently pot VCC is connected to D51, in future this
-  // needs to be connected to Power supply directly.
-  pinMode(51, OUTPUT);
-  digitalWrite(51, HIGH);
-  
-  pinMode(MOTOR_CONTROL_PIN, OUTPUT);
-  digitalWrite(MOTOR_CONTROL_PIN, LOW);
+#if MQ131_ENABLED
+  if (!mq131_module.begin())
+    Serial.println("Error: Failed to initialize MQ131 sensor!");
+#endif
+
+#if PMS_ENABLED
+  if (!pms_module.begin())
+    Serial.println("Error: Failed to initialize PM sensor!");
 #endif
 
   delay(1000);
@@ -90,17 +122,17 @@ void setup()
 
 void loop()
 {
-  float in_volt_val = (analogRead(IN_VOLT_PIN) * 5.02 * 5) / 1023.0;
+  int motor_ctrl_val;
+  float in_volt_val;
+
+  in_volt_val = (analogRead(IN_VOLT_PIN) * 5.02 * 5) / 1023.0;
 
 #if SERIAL_LOG_ENABLED
-  Serial.println();
 
-#if RTC_ENABLED
-  Serial.print(ldt_module.getRtcDateTime());
-#else
-  Serial.print(ldt_module.getGpsDateTime());
-#endif
+#if RTC_ENABLED || GPS_ENABLED
+  Serial.print(ldt_module.getDateTime());
   Serial.print(",");
+#endif
 
   Serial.print("Volt:");
   Serial.print(in_volt_val);
@@ -113,18 +145,32 @@ void loop()
   Serial.print(co2_sensor.getCO2ppm());
   Serial.print(",");
 
-  Serial.print(bme_module.get_bme4print());
+  Serial.print(bme_module.read4print());
+  Serial.print(",");
+
+#if QUAD_ENABLED
+  Serial.print(quad_module.read());
+  Serial.print(",");
 #endif
+
+#if MQ131_ENABLED
+  Serial.print(mq131_module.read4print());
+  Serial.print(",");
+#endif
+
+#if PMS_ENABLED
+  Serial.print(pms_module.read4print());
+#endif
+
+  Serial.println();
+#endif  //SERIAL_LOG_ENABLED
 
 #if SDCARD_LOG_ENABLED
-  file.println();
 
-#if RTC_ENABLED
-  file.print(ldt_module.getRtcDateTime());
-#else
-  file.print(ldt_module.getGpsDateTime());
-#endif
+#if RTC_ENABLED || GPS_ENABLED
+  file.print(ldt_module.getDateTime());
   file.print(",");
+#endif  
 
   file.print(in_volt_val);
   file.print(",");
@@ -135,13 +181,34 @@ void loop()
   file.print(co2_sensor.getCO2ppm());
   file.print(",");
 
-  file.print(bme_module.get_bme4sd());
-  file.flush();
+  file.print(bme_module.read4sd());
+  file.print(",");
+
+#if QUAD_ENABLED
+  file.print(quad_module.read());
+  file.print(",");
 #endif
 
-#if MOTOR_ENABLED
-  int motor_control_pot_val = analogRead(MOTOR_CONTROL_POT_PIN);
-  motor_control_pot_val = (((float)motor_control_pot_val / 1024) * 255);
-  analogWrite(MOTOR_CONTROL_PIN, motor_control_pot_val);
+#if MQ131_ENABLED
+  file.print(mq131_module.read4sd());
+  file.print(",");
 #endif
+
+#if PMS_ENABLED
+  file.print(pms_module.read4sd());
+#endif
+
+  file.println();
+  file.flush();
+#endif //SDCARD_LOG_ENABLED
+
+  // Motor control
+  motor_ctrl_val = analogRead(MOTOR_CTRL_IN_PIN);
+  motor_ctrl_val = (((float)motor_ctrl_val / 1024) * 255);
+  analogWrite(MOTOR_CTRL_OUT_PIN, motor_ctrl_val);
+
+  // Status indication
+  digitalWrite(STATUS_RUNNING, HIGH);
+  delay(100);
+  digitalWrite(STATUS_RUNNING, LOW);
 }

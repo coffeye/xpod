@@ -14,6 +14,7 @@
 
 #include <TinyGPSPlus.h>
 #include <RTClib.h>
+
 #include "xpod_node.h"
 
 #define GPS_SERIAL    (Serial3)
@@ -23,17 +24,15 @@
 class LDT_Module {
   public:
     LDT_Module();
-    int gpsBegin();
-    int rtcBegin();
-    String getGpsDateTime();
-    String getRtcDateTime();
+    int begin();
+    String getDateTime();
 
   private:
     void smartDelay(unsigned long ms);
-    
+
     TinyGPSPlus gps;
-    RTC_DS3231 rtc;
     bool gps_status;
+    RTC_DS3231 rtc;
     bool rtc_status;
 };
 

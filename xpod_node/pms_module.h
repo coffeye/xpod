@@ -1,29 +1,29 @@
 /*******************************************************************************
- * @file    bme_module.h
+ * @file    pms_module.h
  * @brief   
  *
  * @author 	Ajay Kandagal, ajka9053@colorado.edu
  * @date 	  Feb 18 2023
  ******************************************************************************/
-#ifndef _BME_MODULE_H
-#define _BME_MODULE_H
+#ifndef _PMS_MODULE_H
+#define _PMS_MODULE_H
 
-#include <Adafruit_BME680.h>
+#include <Adafruit_PM25AQI.h>
 
-#define BME_SENSOR_ADDR       (0x76)
-#define SEALEVELPRESSURE_HPA  (1013.25)
+#define PMS_SERIAL       (Serial1)
+#define PMS_SERIAL_BR    (9600)
 
-class BME_Module
+class PMS_Module
 {
   public:
-    BME_Module();
+    PMS_Module();
     bool begin();
     String read4sd();
     String read4print();
 
   private:
-    Adafruit_BME680 bme_sensor;
+    Adafruit_PM25AQI pms_sensor;
     bool status;
 };
 
-#endif  //_BME_MODULE_H
+#endif  //_PMS_MODULE_H

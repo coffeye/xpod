@@ -30,7 +30,7 @@ bool BME_Module::begin()
   return status;
 }
 
-String BME_Module::get_bme4sd()
+String BME_Module::read4sd()
 {
   String bms_data_str;
 
@@ -46,7 +46,7 @@ String BME_Module::get_bme4sd()
   return bms_data_str;
 }
 
-String BME_Module::get_bme4print()
+String BME_Module::read4print()
 {
   String bms_data_str;
 

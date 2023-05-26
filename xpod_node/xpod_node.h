@@ -17,12 +17,12 @@
 
 #define SDCARD_LOG_ENABLED    1
 #define SERIAL_LOG_ENABLED    1
-#define RTC_ENABLED           1
-#define GPS_ENABLED           0
+#define RTC_ENABLED           0
+#define GPS_ENABLED           1
 #define PMS_ENABLED           1
-#define QUAD_ENABLED          1
-#define MQ131_ENABLED         1
-#define MOTOR_ENABLED         1
+#define QUAD_ENABLED          0
+#define MQ131_ENABLED         0
+#define MOTOR_ENABLED         0
 
 #define MOTOR_CTRL_IN_PIN     A14
 #define MOTOR_CTRL_OUT_PIN    2

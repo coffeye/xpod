@@ -22,10 +22,16 @@
 #include "ads_module.h"
 #include "bme_module.h"
 
-#if RTC_ENABLED || GPS_ENABLED
-#include "ldt_module.h"
-LDT_Module ldt_module;
+#if GPS_ENABLED
+#include "gps_module.h"
+GPS_Module gps_module;
 #endif
+
+#if RTC_ENABLED
+#include "rtc_module.h"
+RTC_Module rtc_module;
+#endif
+
 
 #if QUAD_ENABLED
 #include "quad_module.h"
@@ -97,11 +103,6 @@ void setup()
   if (!ads_module.begin())
     Serial.println("Error: Failed to initialize one of the ADS1115 module!");
 
-#if GPS_ENABLED
-  if (!ldt_module.begin())
-    Serial.println("Error: Failed to initialize LDT module!");
-#endif
-
 #if QUAD_ENABLED
   if (!quad_module.begin())
     Serial.println("Error: Failed to initialize Quad Stat!");
@@ -110,6 +111,16 @@ void setup()
 #if MQ131_ENABLED
   if (!mq131_module.begin())
     Serial.println("Error: Failed to initialize MQ131 sensor!");
+#endif
+
+#if RTC_ENABLED 
+  if (!rtc_module.begin())
+    Serial.println("Error: Failed to initialize RTC module");
+#endif
+
+#if GPS_ENABLED
+  if (!gps_module.begin())
+    Serial.println("Error: Failed to initialize GPS module!");
 #endif
 
 #if PMS_ENABLED
@@ -129,11 +140,6 @@ void loop()
 
 #if SERIAL_LOG_ENABLED
 
-#if RTC_ENABLED || GPS_ENABLED
-  Serial.print(ldt_module.getDateTime());
-  Serial.print(",");
-#endif
-
   Serial.print("Volt:");
   Serial.print(in_volt_val);
   Serial.print(",");
@@ -145,13 +151,23 @@ void loop()
   Serial.print(co2_sensor.getCO2ppm());
   Serial.print(",");
 
-  Serial.print(bme_module.read4print());
-  Serial.print(",");
+  // Serial.print(bme_module.read4print());
+  // Serial.print(",");
 
 #if QUAD_ENABLED
   Serial.print(quad_module.read());
   Serial.print(",");
 #endif
+
+#if RTC_ENABLED
+  Serial.print(rtc_module.getDateTime());
+  Serial.print(",");
+#endif  
+
+#if GPS_ENABLED
+  Serial.print(gps_module.get_gps_info());
+  Serial.print(",");
+#endif 
 
 #if MQ131_ENABLED
   Serial.print(mq131_module.read4print());
@@ -167,10 +183,10 @@ void loop()
 
 #if SDCARD_LOG_ENABLED
 
-#if RTC_ENABLED || GPS_ENABLED
-  file.print(ldt_module.getDateTime());
-  file.print(",");
-#endif  
+// #if RTC_ENABLED || GPS_ENABLED
+//   file.print(ldt_module.getDateTime());
+//   file.print(",");
+// #endif  
 
   file.print(in_volt_val);
   file.print(",");
@@ -183,6 +199,16 @@ void loop()
 
   file.print(bme_module.read4sd());
   file.print(",");
+
+#if RTC_ENABLED
+  file.print(rtc_module.getDateTime());
+  file.print(",");
+#endif
+
+#if GPS_ENABLED
+  file.print(gps_module.get_gps_info());
+  file.print(",");
+#endif
 
 #if QUAD_ENABLED
   file.print(quad_module.read());

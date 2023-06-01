@@ -140,6 +140,11 @@ void loop()
 
 #if SERIAL_LOG_ENABLED
 
+#if RTC_ENABLED
+  Serial.print(rtc_module.getDateTime());
+  Serial.print(",");
+#endif 
+
   Serial.print("Volt:");
   Serial.print(in_volt_val);
   Serial.print(",");
@@ -157,12 +162,7 @@ void loop()
 #if QUAD_ENABLED
   Serial.print(quad_module.read());
   Serial.print(",");
-#endif
-
-#if RTC_ENABLED
-  Serial.print(rtc_module.getDateTime());
-  Serial.print(",");
-#endif  
+#endif 
 
 #if GPS_ENABLED
   Serial.print(gps_module.get_gps_info());
@@ -183,10 +183,10 @@ void loop()
 
 #if SDCARD_LOG_ENABLED
 
-// #if RTC_ENABLED || GPS_ENABLED
-//   file.print(ldt_module.getDateTime());
-//   file.print(",");
-// #endif  
+#if RTC_ENABLED
+  file.print(rtc_module.getDateTime());
+  file.print(",");
+#endif
 
   file.print(in_volt_val);
   file.print(",");
@@ -199,11 +199,6 @@ void loop()
 
   file.print(bme_module.read4sd());
   file.print(",");
-
-#if RTC_ENABLED
-  file.print(rtc_module.getDateTime());
-  file.print(",");
-#endif
 
 #if GPS_ENABLED
   file.print(gps_module.get_gps_info());

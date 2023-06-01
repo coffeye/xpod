@@ -23,8 +23,7 @@ int RTC_Module::begin()
 
   rtc_status = true;
   // May 26, 2023 at 3am you would call:
-  rtc.adjust(DateTime(2023, 5, 26, 3, 0, 0));
-
+  rtc.adjust(DateTime(2023, 6, 1, 17, 0, 0));
   return rtc_status;
 }
 

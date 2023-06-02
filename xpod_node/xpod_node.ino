@@ -95,7 +95,7 @@ void setup()
   }
   else
   {
-    file.write("---------------LOGGING STARTED----------------------");
+    file.write("---------------LOGGING STARTED----------------------\r\n");
     file.close();
   }
 #endif
@@ -146,7 +146,11 @@ void loop()
 
 #if SERIAL_LOG_ENABLED
 
-
+if(!Serial) {  //check if Serial is available... if not,
+Serial.end();      // close serial port
+delay(100);        //wait 100 millis
+Serial.begin(9600); // reenable serial again
+}
 
 #if RTC_ENABLED
   Serial.print(rtc_module.getDateTime());
@@ -231,6 +235,7 @@ if (file)
   #endif
 
     file.println("\n");
+    file.flush();
     file.close();
   }
   else

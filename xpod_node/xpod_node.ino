@@ -85,12 +85,18 @@ void setup()
     while(1);
   }
 
+
   file = SD.open("xpod.txt", FILE_WRITE);
 
   if (!file) {
     Serial.println("Error: Failed to open file");
     digitalWrite(STATUS_HALTED, HIGH);
     while(1);
+  }
+  else
+  {
+    file.write("---------------LOGGING STARTED----------------------");
+    file.close();
   }
 #endif
 
@@ -140,6 +146,8 @@ void loop()
 
 #if SERIAL_LOG_ENABLED
 
+
+
 #if RTC_ENABLED
   Serial.print(rtc_module.getDateTime());
   Serial.print(",");
@@ -182,45 +190,54 @@ void loop()
 #endif  //SERIAL_LOG_ENABLED
 
 #if SDCARD_LOG_ENABLED
+file = SD.open("xpod.txt", FILE_WRITE);
 
-#if RTC_ENABLED
-  file.print(rtc_module.getDateTime());
-  file.print(",");
-#endif
+if (file)
+{
+  #if RTC_ENABLED
+    file.print(rtc_module.getDateTime());
+    file.print(",");
+  #endif
 
-  file.print(in_volt_val);
-  file.print(",");
+    file.print(in_volt_val);
+    file.print(",");
 
-  file.print(ads_module.read4sd_raw());
-  file.print(",");
+    file.print(ads_module.read4sd_raw());
+    file.print(",");
 
-  file.print(co2_sensor.getCO2ppm());
-  file.print(",");
+    file.print(co2_sensor.getCO2ppm());
+    file.print(",");
 
-  file.print(bme_module.read4sd());
-  file.print(",");
+    file.print(bme_module.read4sd());
+    file.print(",");
 
-#if GPS_ENABLED
-  file.print(gps_module.get_gps_info());
-  file.print(",");
-#endif
+  #if GPS_ENABLED
+    file.print(gps_module.get_gps_info());
+    file.print(",");
+  #endif
 
-#if QUAD_ENABLED
-  file.print(quad_module.read());
-  file.print(",");
-#endif
+  #if QUAD_ENABLED
+    file.print(quad_module.read());
+    file.print(",");
+  #endif
 
-#if MQ131_ENABLED
-  file.print(mq131_module.read4sd());
-  file.print(",");
-#endif
+  #if MQ131_ENABLED
+    file.print(mq131_module.read4sd());
+    file.print(",");
+  #endif
 
-#if PMS_ENABLED
-  file.print(pms_module.read4sd());
-#endif
+  #if PMS_ENABLED
+    file.print(pms_module.read4sd());
+  #endif
 
-  file.println();
-  file.flush();
+    file.println("\n");
+    file.close();
+  }
+  else
+  {
+    Serial.println("Failed to open SD CARD");
+    while(1);
+  }
 #endif //SDCARD_LOG_ENABLED
 
   // Motor control

@@ -61,8 +61,8 @@ File file;
 /******************  Functions  ******************/
 void setup()
 {
-  Serial.begin(9600);
-  Serial.println();
+  // Serial.begin(9600);
+  // Serial.println();
 
   // In voltage
   pinMode(IN_VOLT_PIN, INPUT);
@@ -81,7 +81,7 @@ void setup()
 #if SDCARD_LOG_ENABLED
   if (!SD.begin(SD_CARD_CS_PIN)) {
     digitalWrite(STATUS_HALTED, HIGH);
-    Serial.println("Error: Card failed, or not present");
+    // Serial.println("Error: Card failed, or not present");
     while(1);
   }
 
@@ -89,8 +89,8 @@ void setup()
   file = SD.open("xpod.txt", FILE_WRITE);
 
   if (!file) {
-    Serial.println("Error: Failed to open file");
-    digitalWrite(STATUS_HALTED, HIGH);
+    // Serial.println("Error: Failed to open file");
+    // digitalWrite(STATUS_HALTED, HIGH);
     while(1);
   }
   else
@@ -99,6 +99,7 @@ void setup()
     file.close();
   }
 #endif
+#if SERIAL_LOG_ENABLED
 
   if (!co2_sensor.begin(CO2_I2C_ADDR))
     Serial.println("Error: Failed to initialize CO2 sensor!");
@@ -133,6 +134,8 @@ void setup()
   if (!pms_module.begin())
     Serial.println("Error: Failed to initialize PM sensor!");
 #endif
+
+#endif //Serial log Enabled
 
   delay(1000);
 }

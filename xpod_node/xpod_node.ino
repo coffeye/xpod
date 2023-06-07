@@ -61,8 +61,10 @@ File file;
 /******************  Functions  ******************/
 void setup()
 {
-  // Serial.begin(9600);
-  // Serial.println();
+  #if SERIAL_LOG_ENABLED
+  Serial.begin(9600);
+  Serial.println();
+  #endif
 
   // In voltage
   pinMode(IN_VOLT_PIN, INPUT);
@@ -81,7 +83,9 @@ void setup()
 #if SDCARD_LOG_ENABLED
   if (!SD.begin(SD_CARD_CS_PIN)) {
     digitalWrite(STATUS_HALTED, HIGH);
-    // Serial.println("Error: Card failed, or not present");
+    #if SERIAL_LOG_ENABLED
+    Serial.println("Error: Card failed, or not present");
+    #endif
     while(1);
   }
 
@@ -89,8 +93,10 @@ void setup()
   file = SD.open("xpod.txt", FILE_WRITE);
 
   if (!file) {
-    // Serial.println("Error: Failed to open file");
-    // digitalWrite(STATUS_HALTED, HIGH);
+    #if SERIAL_LOG_ENABLED
+    Serial.println("Error: Failed to open file");
+    #endif
+    digitalWrite(STATUS_HALTED, HIGH);
     while(1);
   }
   else
@@ -99,43 +105,72 @@ void setup()
     file.close();
   }
 #endif
-#if SERIAL_LOG_ENABLED
 
-  if (!co2_sensor.begin(CO2_I2C_ADDR))
-    Serial.println("Error: Failed to initialize CO2 sensor!");
+if (!co2_sensor.begin(CO2_I2C_ADDR))
+    {
+      #if SERIAL_LOG_ENABLED
+      Serial.println("Error: Failed to initialize CO2 sensor!");
+      #endif
+    }
 
-  if (!bme_module.begin())
-    Serial.println("Error: Failed to initialize BME sensor!");
+if (!bme_module.begin())
+    {
+      #if SERIAL_LOG_ENABLED
+      Serial.println("Error: Failed to initialize BME sensor!");
+      #endif
+    }
 
-  if (!ads_module.begin())
+if (!ads_module.begin())
+  {
+    #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize one of the ADS1115 module!");
+    #endif
+  }
 
 #if QUAD_ENABLED
   if (!quad_module.begin())
+  {
+    #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize Quad Stat!");
+    #endif
+  }
 #endif
 
 #if MQ131_ENABLED
   if (!mq131_module.begin())
+  {
+    #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize MQ131 sensor!");
+    #endif
+  }
 #endif
 
 #if RTC_ENABLED 
   if (!rtc_module.begin())
+  {
+    #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize RTC module");
+    #endif
+  }
 #endif
 
 #if GPS_ENABLED
   if (!gps_module.begin())
+  {
+    #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize GPS module!");
+    #endif
+  }
 #endif
 
 #if PMS_ENABLED
   if (!pms_module.begin())
+  {
+    #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize PM sensor!");
+    #endif
+  }
 #endif
-
-#endif //Serial log Enabled
 
   delay(1000);
 }
@@ -171,8 +206,8 @@ Serial.begin(9600); // reenable serial again
   Serial.print(co2_sensor.getCO2ppm());
   Serial.print(",");
 
-  // Serial.print(bme_module.read4print());
-  // Serial.print(",");
+  Serial.print(bme_module.read4print());
+  Serial.print(",");
 
 #if QUAD_ENABLED
   Serial.print(quad_module.read());
@@ -192,7 +227,6 @@ Serial.begin(9600); // reenable serial again
 #if PMS_ENABLED
   Serial.print(pms_module.read4print());
 #endif
-
   Serial.println();
 #endif  //SERIAL_LOG_ENABLED
 
@@ -243,7 +277,9 @@ if (file)
   }
   else
   {
+    #if SERIAL_LOG_ENABLED
     Serial.println("Failed to open SD CARD");
+    #endif
     while(1);
   }
 #endif //SDCARD_LOG_ENABLED

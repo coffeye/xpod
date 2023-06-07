@@ -33,12 +33,6 @@ The code uses various modules and to interface with them specific Arduino librar
 * TinyGPSPlus
 * RTClib
 
-### Modifications
-To enable SD card functionality, following modifications are required
-* Navigate to the folder where the Arduino libraries are installed. Usually this will be under Documents/Arduino/libraries on Windows OS.
-* Inside this directory, open 'SdFat_-_Adafruit_Fork\src\SdFatConfig.h' file and change '#define SPI_DRIVER_SELECT 0' to '#define SPI_DRIVER_SELECT 2'
-* Save and close the file.
-
 Now you should be able to compile the code with SD card logging enabled.
 
 <!-- ROADMAP -->

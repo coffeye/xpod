@@ -42,9 +42,15 @@ String GPS_Module::get_gps_info()
   char c = Serial.read();
   while (ssGPS.available() > 0)
     tinyGps.encode(ssGPS.read());
- 
-  gps_data+= ("LAT:" + String(tinyGps.location.lat()));
-  gps_data+=("Long:" + String(tinyGps.location.lng()));
+  if (tinyGps.location.isValid())
+  {
+    gps_data+= ("LAT:" + String(tinyGps.location.lat()));
+    gps_data+=("Long:" + String(tinyGps.location.lng()));
+  }
+  else
+  {
+    Serial.println("INVALID LOCATION");
+  }
   gps_data+=("Alt:"+ String(tinyGps.altitude.feet()));
   gps_data+=("Course:"+String(tinyGps.course.deg()));
   gps_data+=("Speed:"+ String(tinyGps.speed.mph()));

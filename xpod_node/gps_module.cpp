@@ -24,7 +24,7 @@ int GPS_Module::begin()
 
   if (millis() > 5000 && tinyGps.charsProcessed() < 10)
 {
-  Serial.println("No GPS detected: check wiring.");
+  Serial.println("No GPS module detected: check wiring.");
   return gps_status;
 }
   gps_status = true;

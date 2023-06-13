@@ -5,7 +5,7 @@
  * @brief   Collects data from sensors over ADC-16bit module and logs the data
  *          on both serial monitor and the SD card.
  *
- * @author 	Ajay Kandagal
+ * @author 	Rohan Jha
  * @date 	  Following features are present:
  *          - Sensors Figaro 2600, Fiagaro 2602, CO, PID, E2V, CO, CO2 and BME
  *          - RTC time and GPS time stamping
@@ -28,8 +28,9 @@ GPS_Module gps_module;
 #endif
 
 #if RTC_ENABLED
-#include "rtc_module.h"
-RTC_Module rtc_module;
+#include <RTClib.h>
+RTC_DS3231 rtc;
+DateTime rtc_date_time;
 #endif
 
 
@@ -58,6 +59,9 @@ BME_Module bme_module;
 // Variables
 File file;
 
+String xpodID = "XPOD";
+String fileName;
+// char fileNameArray[20];
 /******************  Functions  ******************/
 void setup()
 {
@@ -87,22 +91,6 @@ void setup()
     Serial.println("Error: Card failed, or not present");
     #endif
     while(1);
-  }
-
-
-  file = SD.open("xpod.txt", FILE_WRITE);
-
-  if (!file) {
-    #if SERIAL_LOG_ENABLED
-    Serial.println("Error: Failed to open file");
-    #endif
-    digitalWrite(STATUS_HALTED, HIGH);
-    while(1);
-  }
-  else
-  {
-    file.write("---------------LOGGING STARTED----------------------\r\n");
-    file.close();
   }
 #endif
 
@@ -146,11 +134,15 @@ if (!ads_module.begin())
 #endif
 
 #if RTC_ENABLED 
-  if (!rtc_module.begin())
+  if (!rtc.begin())
   {
     #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize RTC module");
     #endif
+  }
+  else{
+    rtc.adjust(DateTime(F(__DATE__),F(__TIME__)));
+    rtc_date_time = rtc.now();
   }
 #endif
 
@@ -191,7 +183,7 @@ Serial.begin(9600); // reenable serial again
 }
 
 #if RTC_ENABLED
-  Serial.print(rtc_module.getDateTime());
+  Serial.print(rtc_date_time.timestamp());
   Serial.print(",");
 #endif 
 
@@ -231,12 +223,16 @@ Serial.begin(9600); // reenable serial again
 #endif  //SERIAL_LOG_ENABLED
 
 #if SDCARD_LOG_ENABLED
-file = SD.open("xpod.txt", FILE_WRITE);
+  DateTime now = rtc.now();
+  fileName = "x_" + String(now.month()) + "_" + String(now.day()) + ".txt";
+  char fileNameArray[fileName.length()+1];
+  fileName.toCharArray(fileNameArray, sizeof(fileNameArray));
+  file = SD.open(fileNameArray, O_CREAT | O_APPEND | O_WRITE);
 
 if (file)
 {
   #if RTC_ENABLED
-    file.print(rtc_module.getDateTime());
+    file.print(rtc_date_time.timestamp());
     file.print(",");
   #endif
 
@@ -291,6 +287,6 @@ if (file)
 
   // Status indication
   digitalWrite(STATUS_RUNNING, HIGH);
-  delay(100);
+  delay(1000);
   digitalWrite(STATUS_RUNNING, LOW);
 }

@@ -63,6 +63,15 @@ String xpodID = "XPOD";
 String fileName;
 // char fileNameArray[20];
 /******************  Functions  ******************/
+// #if MET_STATION
+// // Function called anemometer interrupt (2 ticks per rotation), attached to input D4
+// void wspeedIRQ()  {
+//   if (millis() - lastWindIRQ > 10)  { // Ignore switch-bounce glitches less than 10ms (142MPH max reading) after the reed switch closes
+//     lastWindIRQ = millis(); //Grab the current time
+//     windClicks++; //There is 1.492MPH for each click per second.
+//   }
+// }
+// #endif
 void setup()
 {
   #if SERIAL_LOG_ENABLED
@@ -183,6 +192,7 @@ Serial.begin(9600); // reenable serial again
 }
 
 #if RTC_ENABLED
+  rtc_date_time = rtc.now();
   Serial.print(rtc_date_time.timestamp());
   Serial.print(",");
 #endif 
@@ -232,6 +242,7 @@ Serial.begin(9600); // reenable serial again
 if (file)
 {
   #if RTC_ENABLED
+    rtc_date_time = rtc.now();
     file.print(rtc_date_time.timestamp());
     file.print(",");
   #endif

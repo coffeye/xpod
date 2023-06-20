@@ -11,8 +11,8 @@
 #include <Arduino.h>
 #include <Adafruit_ADS1X15.h>
 
-#define FIGARO3_ENABELD       0
-#define FIGARO4_ENABELD       0
+#define FIGARO3_ENABELD       1
+#define FIGARO4_ENABELD       1
 
 enum ads_sensor_id_e
 {

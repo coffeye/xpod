@@ -67,16 +67,9 @@ String PMS_Module::read4print()
   if (!status)
     return "";
 
-    while(pms_sensor.read(&data) && read_tries) {
+    while(!pms_sensor.read(&data) && read_tries) {
     read_tries--;
   }
-
-  if (read_tries == 0)
-  {
-    pms_data_str += ",,,,,,,,";
-    return pms_data_str;
-  }
-
   pms_data_str = "PM10_ENV:" + String(data.pm10_env) + ",";
   pms_data_str += "PM10_ENV:" + String(data.pm25_env) + ",";
   pms_data_str += "PM10_ENV:" + String(data.pm100_env) + ",";

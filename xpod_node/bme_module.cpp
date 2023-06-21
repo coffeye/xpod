@@ -37,11 +37,11 @@ String BME_Module::read4sd()
   if (!status)
     return "";
 
-  bms_data_str = String(bme_sensor.temperature) + ",";
-  bms_data_str += String(bme_sensor.pressure / 100.0) + ",";
-  bms_data_str += String(bme_sensor.humidity) + ",";
-  bms_data_str += String(bme_sensor.gas_resistance / 1000.0) + ",";
-  bms_data_str += String(bme_sensor.readAltitude(SEALEVELPRESSURE_HPA));
+  bms_data_str = String(bme_sensor.temperature) + "\t";
+  bms_data_str += String(bme_sensor.pressure / 100.0) + "\t";
+  bms_data_str += String(bme_sensor.humidity) ;
+  // bms_data_str += String(bme_sensor.gas_resistance / 1000.0) + ",";
+  // bms_data_str += String(bme_sensor.readAltitude(SEALEVELPRESSURE_HPA));
 
   return bms_data_str;
 }

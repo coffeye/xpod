@@ -38,11 +38,6 @@ String PMS_Module::read4sd()
     read_tries--;
   }
 
-  if (read_tries == 0)
-  {
-    pms_data_str += ",,,,,,,,";
-    return pms_data_str;
-  }
 
   pms_data_str = String(data.pm10_env) + ",";
   pms_data_str += String(data.pm25_env) + ",";

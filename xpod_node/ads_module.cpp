@@ -157,24 +157,22 @@ String ADS_Module::read4sd_raw()
 {
   String out_str = "";
 
-  out_str += String(read_figaro(ADS_SENSOR_FIG2600)) + ",";
-  out_str += String(read_raw(ADS_SENSOR_FIG2600)) + ",";
+  // out_str += String(read_figaro(ADS_SENSOR_FIG2600)) +"\t";
+  out_str += String(read_raw(ADS_SENSOR_FIG2600)) + "\t";
 
-  out_str += String(read_figaro(ADS_SENSOR_FIG2602)) + ",";
-  out_str += String(read_raw(ADS_SENSOR_FIG2602)) + ",";
+  // out_str += String(read_figaro(ADS_SENSOR_FIG2602)) + "\t";
+  out_str += String(read_raw(ADS_SENSOR_FIG2602)) + "\t";
 
-#if FIGARO3_ENABELD
-  out_str += String(read_figaro(ADS_SENSOR_FIG3)) + ",";
-  out_str += String(read_raw(ADS_SENSOR_FIG3)) + ",";
-#endif
 
-#if FIGARO4_ENABELD
-  out_str += String(read_figaro(ADS_SENSOR_FIG4)) + ",";
-  out_str += String(read_raw(ADS_SENSOR_FIG4)) + ",";
-#endif
+  // out_str += String(read_figaro(ADS_SENSOR_FIG3)) + "\t";
+  out_str += String(read_raw(ADS_SENSOR_FIG3)) + "\t";
 
-  out_str += String(read_raw(ADS_SENSOR_PID)) + ",";
-  out_str += String(read_raw(ADS_SENSOR_E2V)) + ",";
+  // out_str += String(read_figaro(ADS_SENSOR_FIG4)) + "\t";
+  out_str += String(read_raw(ADS_SENSOR_FIG4)) + "\t";
+
+
+  out_str += String(read_raw(ADS_SENSOR_PID)) + "\t";
+  // out_str += String(read_raw(ADS_SENSOR_E2V)) + "\t";
 
   out_str += String(read_co());
 

@@ -23,7 +23,7 @@
 #define QUAD_ENABLED          1
 #define MQ131_ENABLED         0
 #define MOTOR_ENABLED         0
-#define MET_STATION           1
+#define MET_STATION           0
 
 #define MOTOR_CTRL_IN_PIN     A14
 #define MOTOR_CTRL_OUT_PIN    2

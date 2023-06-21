@@ -121,16 +121,7 @@ void setup()
   file = SD.open(fileNameArray, O_CREAT | O_APPEND | O_WRITE);
   if (file){
     Serial.println("logging started");
-    file.print("\r\n-------------LOGGING STARTED--------------\r\n");
     file.println();
-    file.print("\tTimestamp\t");
-    file.print("Volt\t");
-    file.print("Fig2600\t");
-    file.print("Fig2602\t");
-    file.print("Fig 3\t");
-    file.print("Fig 4\t");
-    file.print("PID\t");
-    file.print("CO\t");
   }
   else{
     Serial.print("Unable to open file");
@@ -144,12 +135,7 @@ if (!co2_sensor.begin(CO2_I2C_ADDR))
       Serial.println("Error: Failed to initialize CO2 sensor!");
       #endif
     }
-  else{
-    
-    #if SDCARD_LOG_ENABLED
-      file.print("CO2\t");
-    #endif
-  }
+
 
 if (!bme_module.begin())
     {
@@ -157,13 +143,6 @@ if (!bme_module.begin())
       Serial.println("Error: Failed to initialize BME sensor!");
       #endif
     }
-   else{
-    #if SDCARD_LOG_ENABLED
-      file.print("Temp\t");
-      file.print("Press\t");
-      file.print("Humid\t");
-    #endif
-  }
 
 if (!ads_module.begin())
   {
@@ -181,7 +160,7 @@ if (!ads_module.begin())
   }
     else{
     #if SDCARD_LOG_ENABLED
-      file.print("\tQuad\t");
+      file.print(",");
     #endif
   }
 #endif
@@ -191,11 +170,6 @@ if (!ads_module.begin())
   {
     #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize MQ131 sensor!");
-    #endif
-  }
-    else{
-    #if SDCARD_LOG_ENABLED
-      file.print("\tMQ131\t");
     #endif
   }
 #endif
@@ -209,11 +183,6 @@ if (!ads_module.begin())
     Serial.println("Error: Failed to initialize GPS module!");
     #endif
   }
-  else{
-    #if SDCARD_LOG_ENABLED
-      file.print("\tGPS\t");
-    #endif
-  }
 #endif
 
 #if PMS_ENABLED
@@ -221,11 +190,6 @@ if (!ads_module.begin())
   {
     #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize PM sensor!");
-    #endif
-  }
-    else{
-    #if SDCARD_LOG_ENABLED
-      file.print("\t\tPM\t");
     #endif
   }
 #endif
@@ -303,29 +267,29 @@ if (file)
     rtc_date_time = rtc.now();
     file.print("\r\n");
     file.print(rtc_date_time.timestamp());
-    file.print("\t");
+    file.print(",");
   #endif
 
     file.print(in_volt_val);
-    file.print("\t");
+    file.print(",");
 
     file.print(ads_module.read4sd_raw());
-    file.print("\t");
+    file.print(",");
 
     file.print(co2_sensor.getCO2ppm());
-    file.print("\t");
+    file.print(",");
 
     file.print(bme_module.read4sd());
-    file.print("\t");
+    file.print(",");
 
   #if QUAD_ENABLED
     file.print(quad_module.read());
-    file.print("\t");
+    file.print(",");
   #endif
 
   #if MQ131_ENABLED
     file.print(mq131_module.read4sd());
-    file.print("\t");
+    file.print(",");
   #endif
 
   #if PMS_ENABLED
@@ -334,7 +298,7 @@ if (file)
 
    #if GPS_ENABLED
     file.print(gps_module.get_gps_info());
-    file.print("\t");
+    file.print(",");
   #endif
 
     file.flush();

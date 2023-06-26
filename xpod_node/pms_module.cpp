@@ -31,8 +31,6 @@ String PMS_Module::read4sd()
   PM25_AQI_Data data;
   int read_tries = 3;
 
-  if (!status)
-    return "";
   
   while(!pms_sensor.read(&data) && read_tries) {
     read_tries--;
@@ -49,7 +47,7 @@ String PMS_Module::read4sd()
   pms_data_str += String(data.particles_25um) + ",";
   pms_data_str += String(data.particles_50um) + ",";
   pms_data_str += String(data.particles_100um);
-
+  delay(100);
   return pms_data_str;
 }
 
@@ -75,6 +73,6 @@ String PMS_Module::read4print()
   pms_data_str += "PM_25um:" + String(data.particles_25um) + ",";
   pms_data_str += "PM_30um:" + String(data.particles_50um) + ",";
   pms_data_str += "PM_100um:" + String(data.particles_100um);
-
+  delay(100);
   return pms_data_str;
 }

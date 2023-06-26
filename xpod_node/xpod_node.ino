@@ -78,13 +78,14 @@ void setup()
   Serial.begin(9600);
   Serial.println();
   #endif
-
+  
   // In voltage
   pinMode(IN_VOLT_PIN, INPUT);
 
   // Motor control
   pinMode(MOTOR_CTRL_IN_PIN, INPUT);
   pinMode(MOTOR_CTRL_OUT_PIN, OUTPUT);
+  pinMode(SD_CARD_CS_PIN, OUTPUT);
 
   // Status LEDs
   pinMode(STATUS_RUNNING, OUTPUT);
@@ -92,6 +93,16 @@ void setup()
   pinMode(STATUS_HALTED, OUTPUT);
 
   Wire.begin();
+  #if SDCARD_LOG_ENABLED
+  digitalWrite(STATUS_HALTED, HIGH);
+  if (!SD.begin(SD_CARD_CS_PIN)) {
+    #if SERIAL_LOG_ENABLED
+    Serial.println("Error: Card failed, or not present");
+    #endif
+    digitalWrite(SD_CARD_CS_PIN,HIGH);
+    // while(1);
+  }
+  SPI.transfer(0);
   #if RTC_ENABLED 
   if (!rtc.begin())
   {
@@ -104,29 +115,7 @@ void setup()
     rtc_date_time = rtc.now();
   }
 #endif
-#if SDCARD_LOG_ENABLED
-  if (!SD.begin(SD_CARD_CS_PIN)) {
-    digitalWrite(STATUS_HALTED, HIGH);
-    #if SERIAL_LOG_ENABLED
-    Serial.println("Error: Card failed, or not present");
-    #endif
-    while(1);
-  }
-  else{
-  DateTime now = rtc.now();
-  Serial.println(now.timestamp());
-  fileName = "x_" + String(now.month()) + "_" + String(now.day()) + ".txt";
-  char fileNameArray[fileName.length()+1];
-  fileName.toCharArray(fileNameArray, sizeof(fileNameArray));
-  file = SD.open(fileNameArray, O_CREAT | O_APPEND | O_WRITE);
-  if (file){
-    Serial.println("logging started");
-    file.println();
-  }
-  else{
-    Serial.print("Unable to open file");
-  }
-  }
+
 #endif
 
 if (!co2_sensor.begin(CO2_I2C_ADDR))
@@ -156,11 +145,6 @@ if (!ads_module.begin())
   {
     #if SERIAL_LOG_ENABLED
     Serial.println("Error: Failed to initialize Quad Stat!");
-    #endif
-  }
-    else{
-    #if SDCARD_LOG_ENABLED
-      file.print(",");
     #endif
   }
 #endif
@@ -195,6 +179,7 @@ if (!ads_module.begin())
 #endif
 
   delay(1000);
+  file.flush();
   file.close();
 }
 
@@ -206,7 +191,7 @@ void loop()
   in_volt_val = (analogRead(IN_VOLT_PIN) * 5.02 * 5) / 1023.0;
 
 #if SERIAL_LOG_ENABLED
-
+digitalWrite(SD_CARD_CS_PIN,LOW);
 if(!Serial) {  //check if Serial is available... if not,
 Serial.end();      // close serial port
 delay(100);        //wait 100 millis
@@ -255,6 +240,7 @@ Serial.begin(9600); // reenable serial again
 #endif  //SERIAL_LOG_ENABLED
 
 #if SDCARD_LOG_ENABLED
+digitalWrite(SD_CARD_CS_PIN,LOW);
   DateTime now = rtc.now();
   fileName = "x_" + String(now.month()) + "_" + String(now.day()) + ".txt";
   char fileNameArray[fileName.length()+1];
@@ -309,7 +295,8 @@ if (file)
     #if SERIAL_LOG_ENABLED
     Serial.println("Failed to open SD CARD");
     #endif
-    while(1);
+    digitalWrite(SD_CARD_CS_PIN,HIGH);
+    // while(1);
   }
 #endif //SDCARD_LOG_ENABLED
 

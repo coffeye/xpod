@@ -34,8 +34,7 @@ String BME_Module::read4sd()
 {
   String bms_data_str;
 
-  if (!status)
-    return "";
+
 
   bms_data_str = String(bme_sensor.temperature) + ",";
   bms_data_str += String(bme_sensor.pressure / 100.0) + ",";

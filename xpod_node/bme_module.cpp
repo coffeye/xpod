@@ -49,8 +49,8 @@ String BME_Module::read4print()
 {
   String bms_data_str;
 
-  if (!status)
-    return "";
+  // if (!status)
+  //   return "";
 
   bms_data_str = "Temp:" + String(bme_sensor.temperature) + " C,";
   bms_data_str += "Pressure:" + String(bme_sensor.pressure / 100.0) + " hPa,";

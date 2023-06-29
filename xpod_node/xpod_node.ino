@@ -63,15 +63,20 @@ String xpodID = "XPOD";
 String fileName;
 // char fileNameArray[20];
 /******************  Functions  ******************/
-// #if MET_STATION
-// // Function called anemometer interrupt (2 ticks per rotation), attached to input D4
-// void wspeedIRQ()  {
-//   if (millis() - lastWindIRQ > 10)  { // Ignore switch-bounce glitches less than 10ms (142MPH max reading) after the reed switch closes
-//     lastWindIRQ = millis(); //Grab the current time
-//     windClicks++; //There is 1.492MPH for each click per second.
-//   }
-// }
-// #endif
+#if MET_STATION
+//Wind direction sensor(Potentiometer) on analog pin 0
+const byte WDIR = A0;
+//Wind speed variables
+long lastWindCheck = 0;
+volatile long lastWindIRQ = 0;
+volatile byte windClicks = 0;
+void wspeedIRQ()  {
+  if (millis() - lastWindIRQ > 10)  { // Ignore switch-bounce glitches less than 10ms (142MPH max reading) after the reed switch closes
+    lastWindIRQ = millis(); //Grab the current time
+    windClicks++; //There is 1.492MPH for each click per second.
+  }
+}
+#endif
 void setup()
 {
   #if SERIAL_LOG_ENABLED
@@ -102,6 +107,9 @@ void setup()
     digitalWrite(SD_CARD_CS_PIN,HIGH);
     // while(1);
   }
+  #if MET_STATION
+  attachInterrupt(4, wspeedIRQ, FALLING); //anemometer reed switch on pin 7--> interrupt# 4
+  #endif
   SPI.transfer(0);
   #if RTC_ENABLED 
   if (!rtc.begin())
@@ -236,7 +244,13 @@ Serial.begin(9600); // reenable serial again
 #if PMS_ENABLED
   Serial.print(pms_module.read4print());
 #endif
-  Serial.println();
+  
+#if MET_STATION
+  String data = "Wind Speed"+String(get_wind_speed()) + "," + String(analogRead(A0)) ;
+  Serial.println(data);
+#endif
+
+// Serial.println();
 #endif  //SERIAL_LOG_ENABLED
 
 #if SDCARD_LOG_ENABLED
@@ -287,6 +301,11 @@ if (file)
     file.print(",");
   #endif
 
+#if MET_STATION
+  data = String(get_wind_speed()) + "," + String(analogRead(A0)) ;
+  file.print(data);
+#endif
+
     file.flush();
     file.close();
   }
@@ -310,3 +329,20 @@ if (file)
   delay(1000);
   digitalWrite(STATUS_RUNNING, LOW);
 }
+#if MET_STATION
+//Returns the instataneous wind speed
+float get_wind_speed(){
+  float deltaTime = millis() - lastWindCheck; //750ms
+
+  deltaTime /= 1000.0; //Covert to seconds
+
+  float windSpeed = (float)windClicks / deltaTime; //3 / 0.750s = 4
+
+  windClicks = 0; //Reset and start watching for new wind
+  lastWindCheck = millis();
+
+  windSpeed *= 1.492; //4 * 1.492 = 5.968MPH
+
+  return (windSpeed);
+}
+#endif

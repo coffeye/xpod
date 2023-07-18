@@ -25,6 +25,10 @@
 #if GPS_ENABLED
 #include "gps_module.h"
 GPS_Module gps_module;
+
+String Time  = "TIME:00:00:00";
+String Date  = "DATE:00/00/2000";
+
 #endif
 
 #if RTC_ENABLED
@@ -48,6 +52,7 @@ MQ131_Module mq131_module;
 #include "pms_module.h"
 PMS_Module pms_module;
 #endif
+
 
 
 /*************  Global Declarations  *************/
@@ -165,8 +170,6 @@ if (!ads_module.begin())
     #endif
   }
 #endif
-
-
 
 #if GPS_ENABLED
   if (!gps_module.begin())
@@ -328,6 +331,7 @@ if (file)
   digitalWrite(STATUS_RUNNING, HIGH);
   delay(1000);
   digitalWrite(STATUS_RUNNING, LOW);
+  Serial.print("\n");
 }
 #if MET_STATION
 //Returns the instataneous wind speed

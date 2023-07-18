@@ -16,7 +16,7 @@
 
 enum ads_sensor_id_e
 {
-    ADS_SENSOR_FIG2600 = 0,
+    ADS_SENSOR_FIG2600 ,
     ADS_SENSOR_FIG2602,
     ADS_SENSOR_FIG3,
     ADS_SENSOR_FIG4,

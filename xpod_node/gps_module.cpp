@@ -60,3 +60,26 @@ String GPS_Module::get_gps_info()
   return gps_data;
 
 }
+
+String GPS_Module::get_gps_dtinfo(){
+  char TimeDate[]  = "TIME:00:00:00 DATE:00/00/2000";
+  if (tinyGps.time.isValid()) {
+        TimeDate[5]  = tinyGps.time.hour()   / 10 + 48;
+        TimeDate[6]  = tinyGps.time.hour()   % 10 + 48;
+        TimeDate[8]  = tinyGps.time.minute() / 10 + 48;
+        TimeDate[9]  = tinyGps.time.minute() % 10 + 48;
+        TimeDate[11] = tinyGps.time.second() / 10 + 48;
+        TimeDate[12] = tinyGps.time.second() % 10 + 48;
+  }
+  if (tinyGps.date.isValid()){
+        TimeDate[19]  = tinyGps.date.day()    / 10 + 48;
+        TimeDate[20]  = tinyGps.date.day()    % 10 + 48;
+        TimeDate[22]  = tinyGps.date.month()  / 10 + 48;
+        TimeDate[23]  = tinyGps.date.month()  % 10 + 48;
+        TimeDate[25] =(tinyGps.date.year()   / 10) % 10 + 48;
+        TimeDate[26] = tinyGps.date.year()   % 10 + 48;
+  }
+
+  return TimeDate;
+
+}

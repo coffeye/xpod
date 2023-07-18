@@ -183,11 +183,11 @@ String ADS_Module::read4print_raw()
 {
   String out_str = "";
   
-//   out_str += "FIG2600:" + String(read_figaro(ADS_SENSOR_FIG2600));
-//   out_str += "(" + String(read_raw(ADS_SENSOR_FIG2600)) + "),";
+  out_str += "FIG2600:" + String(read_figaro(ADS_SENSOR_FIG2600));
+  out_str += "(" + String(read_raw(ADS_SENSOR_FIG2600)) + "),";
 
-//   out_str += "FIG2602:" + String(read_figaro(ADS_SENSOR_FIG2602));
-//   out_str += "(" + String(read_raw(ADS_SENSOR_FIG2602)) + "),";
+  out_str += "FIG2602:" + String(read_figaro(ADS_SENSOR_FIG2602));
+  out_str += "(" + String(read_raw(ADS_SENSOR_FIG2602)) + "),";
 
 #if FIGARO3_ENABELD
   out_str += "FIG3:" + String(read_figaro(ADS_SENSOR_FIG3)) + ",";

@@ -16,12 +16,12 @@
 #define _XPOD_NODE_H
 
 #define SDCARD_LOG_ENABLED    1
-#define SERIAL_LOG_ENABLED    0
+#define SERIAL_LOG_ENABLED    1
 #define RTC_ENABLED           1
 #define GPS_ENABLED           0
 #define PMS_ENABLED           1
 #define QUAD_ENABLED          0
-#define MQ131_ENABLED         0
+#define MQ131_ENABLED         1
 #define MOTOR_ENABLED         0
 #define MET_STATION           0
 

@@ -18,11 +18,12 @@ class GPS_Module {
     GPS_Module();
     int begin();
     String get_gps_info();
+    String get_gps_dtinfo();
 
   private:
 
-    TinyGPSPlus tinyGps;
     bool gps_status;
+    TinyGPSPlus tinyGps;
 };
 
 #endif 

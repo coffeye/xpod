@@ -23,6 +23,7 @@
 #include "ads_module.h"
 #include "bme_module.h"
 
+#include <avr/wdt.h> // Watchdog library
 
 #if GPS_ENABLED
 #include "gps_module.h"
@@ -186,6 +187,9 @@ if (!ads_module.begin())
 #endif
   initpots();
   DownPot(1);
+  // These enable/disable the watchdog timer
+  wdt_enable(WDTO_8S);
+  //wdt_disable();
 
   delay(1000);
   file.flush();
@@ -194,6 +198,7 @@ if (!ads_module.begin())
 
 void loop()
 {
+  wdt_reset();  // resets the watchdog timer
   int motor_ctrl_val;
   float in_volt_val;
 

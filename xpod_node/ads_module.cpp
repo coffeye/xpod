@@ -18,11 +18,17 @@ ADS_Module::ADS_Module()
 #if FIGARO3_ENABELD
   ads_module[ADS_SENSOR_FIG3].addr = 0x48;
   ads_module[ADS_SENSOR_FIG3].channel = 0;
+
+  ads_module[ADS_HEATER_FIG3].addr = 0x48;
+  ads_module[ADS_HEATER_FIG3].channel = 1;
 #endif
 
 #if FIGARO4_ENABELD
   ads_module[ADS_SENSOR_FIG4].addr = 0x49;
   ads_module[ADS_SENSOR_FIG4].channel = 0;
+
+  ads_module[ADS_HEATER_FIG4].addr = 0x49;
+  ads_module[ADS_HEATER_FIG4].channel = 1;
 #endif
 
   ads_module[ADS_SENSOR_PID].addr = 0x48;
@@ -167,10 +173,13 @@ String ADS_Module::read4sd_raw()
   // out_str += String(read_figaro(ADS_SENSOR_FIG3)) + ",";
   out_str += String(read_raw(ADS_SENSOR_FIG3)) + ",";
 
+  out_str += String(read_raw(ADS_HEATER_FIG3)) + ",";
+
   // out_str += String(read_figaro(ADS_SENSOR_FIG4)) + ",";
   out_str += String(read_raw(ADS_SENSOR_FIG4)) + ",";
 
-
+  out_str += String(read_raw(ADS_HEATER_FIG4)) + ",";
+  
   out_str += String(read_raw(ADS_SENSOR_PID)) + ",";
   // out_str += String(read_raw(ADS_SENSOR_E2V)) + ",";
 

@@ -19,16 +19,14 @@
 #include <SD.h>
 #include <s300i2c.h>
 
+#include "digipot.h"
 #include "ads_module.h"
 #include "bme_module.h"
+
 
 #if GPS_ENABLED
 #include "gps_module.h"
 GPS_Module gps_module;
-
-String Time  = "TIME:00:00:00";
-String Date  = "DATE:00/00/2000";
-
 #endif
 
 #if RTC_ENABLED
@@ -52,8 +50,6 @@ MQ131_Module mq131_module;
 #include "pms_module.h"
 PMS_Module pms_module;
 #endif
-
-
 
 /*************  Global Declarations  *************/
 // Modules
@@ -188,6 +184,8 @@ if (!ads_module.begin())
     #endif
   }
 #endif
+  initpots();
+  DownPot(1);
 
   delay(1000);
   file.flush();
@@ -199,7 +197,7 @@ void loop()
   int motor_ctrl_val;
   float in_volt_val;
 
-  in_volt_val = (analogRead(IN_VOLT_PIN) * 5.02 * 5) / 1023.0;
+  in_volt_val = (analogRead(IN_VOLT_PIN) * 5.02 * 5) / 1023.0;//Follow up with rylee
 
 #if SERIAL_LOG_ENABLED
 digitalWrite(SD_CARD_CS_PIN,LOW);
@@ -235,7 +233,7 @@ Serial.begin(9600); // reenable serial again
 #endif 
 
 #if GPS_ENABLED
-  Serial.print(gps_module.get_gps_info());
+  Serial.print(gps_module.get_gps_info_serial());
   Serial.print(",");
 #endif 
 
@@ -285,28 +283,43 @@ if (file)
     file.print(bme_module.read4sd());
     file.print(",");
 
-  #if QUAD_ENABLED
+  #if(QUAD_ENABLED)
     file.print(quad_module.read());
     file.print(",");
+  #else
+    file.print(",,,,,,,,");
   #endif
 
-  #if MQ131_ENABLED
+  if(MQ131_ENABLED){
     file.print(mq131_module.read4sd());
     file.print(",");
-  #endif
+  }
+  else{
+    file.print(",,");
+  }
+  
 
-  #if PMS_ENABLED
+  if(PMS_ENABLED){
     file.print(pms_module.read4sd());
-  #endif
+  }
+  else{
+    file.print(",,,,,,,,,");
+  }
 
-   #if GPS_ENABLED
-    file.print(gps_module.get_gps_info());
+  #if GPS_ENABLED
+    file.print(gps_module.get_gps_info_sd());
+    file.print(gps_module.get_gps_dtinfo());
     file.print(",");
+  #else
+    file.print(",,,,,,,,");
   #endif
+  
 
 #if MET_STATION
-  data = String(get_wind_speed()) + "," + String(analogRead(A0)) ;
+  data = String(get_wind_speed() + "," + String(analogRead(A0)) ;
   file.print(data);
+#else
+  file.print(",,");
 #endif
 
     file.flush();
@@ -350,3 +363,4 @@ float get_wind_speed(){
   return (windSpeed);
 }
 #endif
+

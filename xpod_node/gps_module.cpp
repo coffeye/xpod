@@ -31,7 +31,7 @@ int GPS_Module::begin()
   return gps_status;
 }
 
-String GPS_Module::get_gps_info()
+String GPS_Module::get_gps_info_serial()
 {
   String gps_data;
 
@@ -54,32 +54,55 @@ String GPS_Module::get_gps_info()
   gps_data+=("Alt:"+ String(tinyGps.altitude.feet()));
   gps_data+=("Course:"+String(tinyGps.course.deg()));
   gps_data+=("Speed:"+ String(tinyGps.speed.mph()));
-  gps_data+=("Sats:"+ String(tinyGps.satellites.value()));
+  gps_data+=("Sats:"+ String(tinyGps.satellites.value())); //Check what this does
   delay(100);
   
   return gps_data;
 
 }
+String GPS_Module::get_gps_info_sd()
+{
+  String gps_data;
+
+  if (!gps_status)
+    return "\0";
+  // Print latitude, longitude, altitude in feet, course, speed, date, time,
+  // and the number of visible satellites.
+  char c = Serial.read();
+  while (ssGPS.available() > 0)
+    tinyGps.encode(ssGPS.read());
+  if (tinyGps.location.isValid())
+  {
+    gps_data+= (String(tinyGps.location.lat())+",");
+    gps_data+=(String(tinyGps.location.lng())+",");
+
+  gps_data+=(String(tinyGps.altitude.feet())+",");
+  gps_data+=(String(tinyGps.course.deg())+",");
+  gps_data+=(String(tinyGps.speed.mph())+",");
+  gps_data+=(String(tinyGps.satellites.value())+","); //Check what this does
+  delay(100);
+  }
+  return gps_data;
+
+}
 
 String GPS_Module::get_gps_dtinfo(){
-  char TimeDate[]  = "TIME:00:00:00 DATE:00/00/2000";
+  char TimeDate[]  = "00:00:00,00/00/2000";  //Double check on what time it displays
   if (tinyGps.time.isValid()) {
-        TimeDate[5]  = tinyGps.time.hour()   / 10 + 48;
-        TimeDate[6]  = tinyGps.time.hour()   % 10 + 48;
-        TimeDate[8]  = tinyGps.time.minute() / 10 + 48;
-        TimeDate[9]  = tinyGps.time.minute() % 10 + 48;
-        TimeDate[11] = tinyGps.time.second() / 10 + 48;
-        TimeDate[12] = tinyGps.time.second() % 10 + 48;
+        TimeDate[0]  = tinyGps.time.hour()   / 10 + 48;
+        TimeDate[1]  = tinyGps.time.hour()   % 10 + 48;
+        TimeDate[3]  = tinyGps.time.minute() / 10 + 48;
+        TimeDate[4]  = tinyGps.time.minute() % 10 + 48;
+        TimeDate[6] = tinyGps.time.second() / 10 + 48;
+        TimeDate[7] = tinyGps.time.second() % 10 + 48;
   }
   if (tinyGps.date.isValid()){
-        TimeDate[19]  = tinyGps.date.day()    / 10 + 48;
-        TimeDate[20]  = tinyGps.date.day()    % 10 + 48;
-        TimeDate[22]  = tinyGps.date.month()  / 10 + 48;
-        TimeDate[23]  = tinyGps.date.month()  % 10 + 48;
-        TimeDate[25] =(tinyGps.date.year()   / 10) % 10 + 48;
-        TimeDate[26] = tinyGps.date.year()   % 10 + 48;
+        TimeDate[9]  = tinyGps.date.day()    / 10 + 48;
+        TimeDate[10]  = tinyGps.date.day()    % 10 + 48;
+        TimeDate[12]  = tinyGps.date.month()  / 10 + 48;
+        TimeDate[13]  = tinyGps.date.month()  % 10 + 48;
+        TimeDate[15] =(tinyGps.date.year()   / 10) % 10 + 48;
+        TimeDate[16] = tinyGps.date.year()   % 10 + 48;
   }
-
   return TimeDate;
-
 }

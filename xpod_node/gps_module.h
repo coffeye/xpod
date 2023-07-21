@@ -19,7 +19,8 @@ class GPS_Module {
     int begin();
     String get_gps_info();
     String get_gps_dtinfo();
-
+    String get_gps_info_sd();
+    String get_gps_info_serial();
   private:
 
     bool gps_status;

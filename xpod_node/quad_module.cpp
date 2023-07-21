@@ -74,7 +74,7 @@ String QUAD_Module::read()
   alpha_two.convertAndRead(MCP342x::channel4, MCP342x::oneShot, MCP342x::resolution16, 
                           MCP342x::gain1, 1000000, value, status);
   quad_data += String(value);
-  
+    
   // //Read ADCs on-board and on-Quadstat
   // for (int i = 1; i <= 16; i++) 
   // {

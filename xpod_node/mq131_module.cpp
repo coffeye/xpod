@@ -58,7 +58,7 @@ String MQ131_Module::read4print()
   String mq_data;
 
   if (!status)
-    return "";
+    return ",";
 
 #if READ_JUST_RAW 
   mq_data = "MQ131: " + String(ads_module.readADC_SingleEnded(MQ131_I2C_CHL));

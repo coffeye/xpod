@@ -1,0 +1,20 @@
+################################################
+# Syntax Coloring Map ELT_S300_HOLLY library
+################################################
+
+################################################
+# Datatypes (KEYWORD1)
+################################################
+S300I2C		KEYWORD1
+
+################################################
+# Methods and Functions (KEYWORD2)
+################################################
+getCO2ppm	KEYWORD2
+sleep		KEYWORD2
+wakeup		KEYWORD2
+clear_recalib	KEYWORD2
+start_mcdl	KEYWORD2
+end_mcdl	KEYWORD2
+start_acdl	KEYWORD2
+end_acdl	KEYWORD2

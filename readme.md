@@ -3,7 +3,7 @@
   <h2 align="center">Hannigan Labs</h2>
 
   <h3 align="center">
-    Xpod for Environmental Sensing 
+    X-POD for Low-Cost Air Quality Sensing 
     <br />
   </h3>
 </div>

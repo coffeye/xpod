@@ -9,8 +9,6 @@
 </div>
 
 ***
-
-### Built With
 The code is developed and compiled on Arduino IDE. Make sure you have the latest version of [Arduino IDE](https://www.arduino.cc/en/software) installed.
 
 <!-- GETTING STARTED -->

@@ -28,4 +28,6 @@ For the Firmware Team
    ```sh
    git clone https://github.com/coffeye/xpod.git
    git checkout {insert file name here}
-   ```
+
+* This repository is currently working on pushing the files
+  ```

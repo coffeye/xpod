@@ -114,9 +114,9 @@ void setup()
   pinMode(MOTOR_CTRL_OUT_PIN, OUTPUT);
   pinMode(SD_CARD_CS_PIN, OUTPUT);
 
-  // Status LEDs
+// status LEDs
   pinMode(STATUS_RUNNING, OUTPUT);
- // pinMode(STATUS_ERROR, OUTPUT);
+ // pinMode(STATUS_ERROR, OUTPUT); // pin needs to be changed
   pinMode(STATUS_HALTED, OUTPUT);
 
   Wire.begin();
@@ -124,30 +124,45 @@ void setup()
   
   
   #if RTC_ENABLED 
+    DateTime dt;
     if (!rtc.begin())
     {
       #if SERIAL_LOG_ENABLED
         Serial.println("Error: Failed to initialize RTC module");
       #endif
+      //just to indicate RTC not initialized
+        digitalWrite(STATUS_HALTED,HIGH);
+        delay(1000);
+        digitalWrite(STATUS_HALTED,LOW);
+        delay(1000);
+
     }
     else{
       // rtc.adjust(DateTime(F(__DATE__),F(__TIME__)));    // Only run uncommented once to initialize RTC
      rtc_date_time = rtc.now();
 
     }
+    while(rtc.lostPower()){
+      #if SERIAL_LOG_ENABLED
+        Serial.println("Error: RTC module power lost, change battery");
+      #endif
+       //just to indicate rtc power lost
+        digitalWrite(STATUS_HALTED,HIGH);
+        delay(5000); //delay for 5 sec
+        digitalWrite(STATUS_HALTED,LOW);
+        delay(5000);
+
+    }
   #endif
-  Serial.println("initialize RTC module done");
 
   #if SDCARD_LOG_ENABLED
      digitalWrite(SD_CARD_CS_PIN,LOW);
 
   DateTime now = rtc.now();
-  fileName = xpodID + "_" + String(now.year()) + "_" + String(now.month()) + "_" + String(now.day()) + ".txt";
+  fileName = xpodID + "_" +  String(now.month()) + "_" + String(now.day()) + "_"  + String(now.year()) + ".txt";
   char fileNameArray[fileName.length()+1];
   fileName.toCharArray(fileNameArray, sizeof(fileNameArray)); //Well damn, that function is nice.
-        Serial.println("SD card file name");
 
-      Serial.println(fileName);
 
    if(!sd.begin(SD_CARD_CS_PIN))
   {
@@ -155,12 +170,13 @@ void setup()
     Serial.println("insert sd card to begin");
     #endif
     sd.begin(SD_CARD_CS_PIN);
+    // just to indicate sd card fail to init
+    digitalWrite(STATUS_HALTED,HIGH);
+    delay(1000);
+    digitalWrite(STATUS_HALTED,LOW);
+    delay(1000);  
   }
-  else{
-    Serial.println("sd card init done");
-
-  }
-     digitalWrite(SD_CARD_CS_PIN,HIGH);
+  digitalWrite(SD_CARD_CS_PIN,HIGH);
   SPI.transfer(0);
 
   #endif
@@ -312,13 +328,13 @@ void loop()
     #if PMS_ENABLED
       Serial.print(pms_module.read4print());
       pms_module.read4blynk();
-            Serial.print(",");
+      Serial.print(",");
 
     #endif
 
     #if OPC_ENABLED
       Serial.print(opc.read4print(opcData));
-            Serial.print(",");
+      Serial.print(",");
 
     #endif
 
@@ -348,9 +364,14 @@ void loop()
    while(!sd.begin(SD_CARD_CS_PIN))
   {
       #if SERIAL_LOG_ENABLED
-      Serial.println("error in loop");
+      Serial.println("error: SD card init failed in loop");
       #endif
       sd.begin(SD_CARD_CS_PIN);
+      // just to indicates sd card fail to init
+      digitalWrite(STATUS_HALTED,HIGH);
+      delay(1000);
+      digitalWrite(STATUS_HALTED,LOW);
+      delay(1000);  
   }
        
 
@@ -374,7 +395,8 @@ void loop()
     
         file.print(bme_module.read4sd());
         file.print(",");
-    
+
+        
       #if QUAD_ENABLED
         file.print(quad_module.read());
         file.print(",");
@@ -422,7 +444,11 @@ void loop()
       #else
         file.print(",,");
       #endif
-    
+      //just indicate SD CARD writing
+        digitalWrite(STATUS_RUNNING,HIGH);
+        _delay_ms(100);
+        digitalWrite(STATUS_RUNNING,LOW);
+
       file.close();
     }
     else
@@ -431,6 +457,12 @@ void loop()
         Serial.println("Failed to open SD CARD");
       #endif
       digitalWrite(SD_CARD_CS_PIN,HIGH);
+      //just to indicate SD CARD not writing
+      digitalWrite(STATUS_HALTED,HIGH);
+      delay(1000);
+      digitalWrite(STATUS_HALTED,LOW);
+      delay(1000);
+
       // while(1);
     }
   #endif //SDCARD_LOG_ENABLED
@@ -442,7 +474,7 @@ void loop()
   analogWrite(MOTOR_CTRL_OUT_PIN, motor_ctrl_val);
 
   // Status indication
-  digitalWrite(STATUS_RUNNING, HIGH);
+  //digitalWrite(STATUS_RUNNING, HIGH);
   // This all controls how long the loop lasts
   if((SAMPLE_TIME * 1000) - (millis() - startLoop) >= 0)
   {
@@ -459,7 +491,7 @@ void loop()
   {
     delay(100);
   }
-  digitalWrite(STATUS_RUNNING, LOW);
+ // digitalWrite(STATUS_RUNNING, LOW);
   Serial.print("\n");
 
 }

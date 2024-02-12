@@ -11,7 +11,8 @@
 pot potvar[NUM_POTS];
 
 //Configuring digital potentiometers
- void initpots(){
+ void initpots()
+ {
   potvar[0].clk = 4;
   potvar[0].ud = 5;
   potvar[0].cs = 6;

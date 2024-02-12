@@ -44,6 +44,8 @@ class ADS_Module {
     float read_figaro(ads_sensor_id_e ads_sensor_id);
     float read_heater(ads_sensor_id_e ads_sensor_id);
     float read_co();
+    float read_co_aux();
+    float read_co_main();
     uint16_t read_raw(ads_sensor_id_e ads_sensor_id);
 
     String read4sd();

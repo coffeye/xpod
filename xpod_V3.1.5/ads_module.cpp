@@ -98,7 +98,8 @@ float ADS_Module::read_figaro(ads_sensor_id_e ads_sensor_id)
   return volts;
 }
 
-float ADS_Module::read_heater(ads_sensor_id_e ads_sensor_id){
+float ADS_Module::read_heater(ads_sensor_id_e ads_sensor_id)
+{
   ads_module_t *sensor = &ads_module[ads_sensor_id];
 
   const int samples = 20;
@@ -131,6 +132,32 @@ float ADS_Module::read_co()
   return (sensor->module.readADC_Differential_0_1() - sensor->module.readADC_Differential_2_3());
 }
 
+float ADS_Module::read_co_aux()
+{
+  ads_module_t *sensor = &ads_module[ADS_SENSOR_CO];
+
+  float val;
+  const float multiplier = 0.1875F;  // ADS1115  @ +/- 6.144V gain (16-bit results)
+
+  if (!sensor->status)
+    return -999;
+
+  return (sensor->module.readADC_Differential_0_1());
+}
+
+float ADS_Module::read_co_main()
+{
+  ads_module_t *sensor = &ads_module[ADS_SENSOR_CO];
+
+  float val;
+  const float multiplier = 0.1875F;  // ADS1115  @ +/- 6.144V gain (16-bit results)
+
+  if (!sensor->status)
+    return -999;
+
+  return (sensor->module.readADC_Differential_2_3());
+}
+
 uint16_t ADS_Module::read_raw(ads_sensor_id_e ads_sensor_id)
 {
   ads_module_t *sensor = &ads_module[ads_sensor_id];
@@ -140,6 +167,7 @@ uint16_t ADS_Module::read_raw(ads_sensor_id_e ads_sensor_id)
 
   return sensor->module.readADC_SingleEnded(sensor->channel);
 }
+
 
 String ADS_Module::read4sd()
 {
@@ -155,7 +183,7 @@ String ADS_Module::read4sd()
 #endif
   out_str += String(read_raw(ADS_SENSOR_PID)) + ",";
   out_str += String(read_raw(ADS_SENSOR_E2V)) + ",";
-  out_str += String(read_co());
+  out_str += String(read_co_aux()) + "," + String(read_co_main());
 
   return out_str;
 }
@@ -206,8 +234,7 @@ String ADS_Module::read4sd_raw()
   out_str += String(read_raw(ADS_SENSOR_PID)) + ",";
   out_str += String(read_raw(ADS_SENSOR_E2V)) + ",";
 
-  out_str += String(read_co());
-
+  out_str += String(read_co_aux()) + "," + String(read_co_main());
   return out_str;
 }
 
@@ -239,7 +266,7 @@ String ADS_Module::read4print_raw()
 
   out_str += "PID:" + String(read_raw(ADS_SENSOR_PID)) + ",";
   out_str += "E2V:" + String(read_raw(ADS_SENSOR_E2V)) + ",";
-  out_str += "CO:" + String(read_co());
+  out_str += "CO:" + String(read_co_aux()) + "," + String(read_co_main());;
 
 
   return out_str;

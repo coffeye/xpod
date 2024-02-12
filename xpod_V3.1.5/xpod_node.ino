@@ -78,6 +78,7 @@ particleData opcData;
 
 /******************  Functions  ******************/
 #if MET_STATION
+#include "wind_vane.h"
 //Wind direction sensor(Potentiometer) on analog pin 15
 const byte WDIR = A15;
 //Wind speed variables
@@ -136,9 +137,11 @@ void setup()
     }
     else
     {
-      //uncomment this line give current date and time if needed
+      // uncomment this line give current date and time if needed
       // DateTime initialDateTime(2023, 11, 28, 10, 21, 0); yyyy:mm:dd , hh:mm:ss
-     // rtc.adjust(initialDateTime);    // Only run uncommented once to initialize RTC
+      // rtc.adjust(initialDateTime);    // Only run uncommented once to initialize RTC
+
+     //rtc.adjust(DateTime(F(__DATE__),F(__TIME__)));    // Only run uncommented once to initialize RTC
      rtc_date_time = rtc.now();
 
     }

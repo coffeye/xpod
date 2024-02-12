@@ -21,7 +21,7 @@
 #define SERIAL_LOG_ENABLED    (1)
 #define RTC_ENABLED           (1)
 #define GPS_ENABLED           (0)
-#define PMS_ENABLED           (1)
+#define PMS_ENABLED           (0)
 #define QUAD_ENABLED          (0)
 #define MQ131_ENABLED         (0)
 #define MOTOR_ENABLED         (0)
